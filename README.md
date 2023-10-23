@@ -1,5 +1,7 @@
 # MX Pytorch Emulation Library #
 
+[OCP MX Formats Specification](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
+
 This library provides the capability to emulate MX-compatble formats
 and bfloat quantization in pytorch, enabling data science exploration
 for DNNs with different MX formats.
@@ -242,9 +244,10 @@ Let the shared exponent be 2. The quantization grid points are:
 With this system, any number in [1.5, 2) are rounded to 1.5. There can't be a 2 or the shared exp would become 2.
 Even 1.99 gets rounded to 1.5
 
-### MX Sign-Magnitude ###
-MXINT uses sign-magnitude representation, not 2's complement.
-This is to avoid an imbalanced representation.
+### MXINT 2's Complement ###
+Following the OCP MX Formats Specification, MXINT elements utilize 2's complement
+with the asymmetric maximum negative representation left unused.
+The representable values in this encoding are identical to those of sign-magnitude.
 
 ## CUDA Extensions ##
 The ```cpp``` directory includes custom C++ and CUDA implementations of
