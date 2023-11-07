@@ -40,6 +40,10 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 confusion or imply Microsoft sponsorship. Any use of third-party trademarks or
 logos are subject to those third-party’s policies.
 
+## Integration Guide ##
+The repo contains a PDF guide to integrating MX into your PyTorch models.
+The ```examples``` folders also contains working code samples.
+
 ## Files ##
 #### Configuration ####
  * specs.py: configurable settings for MX and bfloat quantization, functions

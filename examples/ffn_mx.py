@@ -59,6 +59,7 @@ if __name__ == '__main__':
 
     # Process args to obtain mx_specs
     mx_specs = get_mx_specs(args)
+    assert(mx_specs != None)
 
     # Run MLP
     x = np.random.randn(16, args.hidden_size)
