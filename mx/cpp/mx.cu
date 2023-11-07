@@ -52,18 +52,18 @@ torch::Tensor quantize_mx_cuda(
         AT_ASSERTM(0, " fp16 not supported for MX");
     } else {
         quantize_mx_cuda_kernel<<<blocks, threads>>>(
-            input.data<float>(),
+            input.data_ptr<float>(),
             scale_bits,
             elem_ebits,
             elem_mbits,
             elem_max_norm,
-            max_values.data<float>(),
+            max_values.data_ptr<float>(),
             total_size,
             axis_size,
             post_axis_size,
             flush_fp32_subnorms,
             rounding_mode,
-            output.data<float>()
+            output.data_ptr<float>()
         );
     }
 
@@ -125,7 +125,7 @@ torch::Tensor quantize_mx_by_tile_cuda(
             AT_ASSERTM(0, " fp16 not supported for MX");
         } else {
             quantize_mx_innermost_cuda_kernel<<<blocks, threads>>>(
-                input.data<float>(),
+                input.data_ptr<float>(),
                 scale_bits,
                 elem_ebits,
                 elem_mbits,
@@ -134,7 +134,7 @@ torch::Tensor quantize_mx_by_tile_cuda(
                 tsize,
                 flush_fp32_subnorms,
                 rounding_mode,
-                output.data<float>()
+                output.data_ptr<float>()
             );
         }
     }
@@ -150,7 +150,7 @@ torch::Tensor quantize_mx_by_tile_cuda(
             AT_ASSERTM(0, " fp16 not supported for MX");
         } else {
             quantize_mx_by_tile_cuda_kernel<<<blocks, threads>>>(
-                input.data<float>(),
+                input.data_ptr<float>(),
                 scale_bits,
                 elem_ebits,
                 elem_mbits,
@@ -162,7 +162,7 @@ torch::Tensor quantize_mx_by_tile_cuda(
                 post_axis_size,
                 flush_fp32_subnorms,
                 rounding_mode,
-                output.data<float>()
+                output.data_ptr<float>()
             );
         }
     }

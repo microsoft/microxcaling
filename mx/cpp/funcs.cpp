@@ -45,9 +45,9 @@ torch::Tensor quantize_mx_func_cpp(
     auto B = torch::empty_like(A);
 
     // Get data pointers
-    auto max_value_data = max_values.data<float>();
-    auto A_data = A.data<float>();
-    auto B_data = B.data<float>();
+    auto max_value_data = max_values.data_ptr<float>();
+    auto A_data = A.data_ptr<float>();
+    auto B_data = B.data_ptr<float>();
 
     // Size of shared axis
     auto A_sizes = A.sizes();
@@ -119,8 +119,8 @@ torch::Tensor quantize_elemwise_func_cpp(
     auto output = torch::empty_like(input);
 
     // Get data pointers
-    auto i_data = input.data<float>();
-    auto o_data = output.data<float>();
+    auto i_data = input.data_ptr<float>();
+    auto o_data = output.data_ptr<float>();
 
     // Loop over dimension before shared axis
     for (long i = 0; i < total_size; i++) {

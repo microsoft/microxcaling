@@ -43,7 +43,7 @@ torch::Tensor quantize_elemwise_cuda(
     if (input.dtype() == torch::ScalarType::Half) {
         #if (__CUDACC_VER_MAJOR__ >= 10 || (__CUDACC_VER_MAJOR__ == 9 && __CUDACC_VER_MINOR__ >= 2))
         quantize_elemwise_cuda_kernel<<<blocks, threads>>>(
-            (__half*)input.data<at::Half>(),
+            (__half*)input.data_ptr<at::Half>(),
             bits,
             exp_bits,
             max_norm,
@@ -51,14 +51,14 @@ torch::Tensor quantize_elemwise_cuda(
             rounding_mode,
             saturate_normals,
             allow_denorm,
-            (__half*)output.data<at::Half>()
+            (__half*)output.data_ptr<at::Half>()
         );
         #else
         AT_ASSERTM(0, " fp16 not supported on this CUDA device");
         #endif
     } else {
         quantize_elemwise_cuda_kernel<<<blocks, threads>>>(
-            input.data<float>(),
+            input.data_ptr<float>(),
             bits,
             exp_bits,
             max_norm,
@@ -66,7 +66,7 @@ torch::Tensor quantize_elemwise_cuda(
             rounding_mode,
             saturate_normals,
             allow_denorm,
-            output.data<float>()
+            output.data_ptr<float>()
         );
     }
 

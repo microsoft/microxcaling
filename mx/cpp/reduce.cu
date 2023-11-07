@@ -43,10 +43,10 @@ torch::Tensor reduce_sum_inner_dim(
         AT_ASSERTM(0, "fp16 reduce is not supported");
     } else {
         reduce_sum_kernel<float><<<blocks, threads>>>(
-            input.data<float>(),
+            input.data_ptr<float>(),
             total_size,
             inner_dim_size,
-            output.data<float>()
+            output.data_ptr<float>()
         );
     }
 
@@ -81,10 +81,10 @@ torch::Tensor reduce_max_inner_dim(
         AT_ASSERTM(0, "fp16 reduce is not supported");
     } else {
         reduce_max_kernel<float><<<blocks, threads>>>(
-            input.data<float>(),
+            input.data_ptr<float>(),
             total_size,
             inner_dim_size,
-            output.data<float>()
+            output.data_ptr<float>()
         );
     }
 
