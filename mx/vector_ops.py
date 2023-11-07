@@ -116,9 +116,9 @@ def vec_reduce_sum(input, dim, keepdim=False, mx_specs=None,
 
 def vec_reduce_mean(input, dim, keepdim=False, mx_specs=None,
                     round=None):
-    # np.product returns 1.0 for empty list
+    # np.prod returns 1.0 for empty list
     dim = dim if type(dim) is list else [dim]
-    denom = np.product([input.shape[i] for i in dim])
+    denom = np.prod([input.shape[i] for i in dim])
 
     s = vec_reduce_sum(input, dim, keepdim=keepdim,
                        mx_specs=mx_specs, round=round)

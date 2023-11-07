@@ -514,9 +514,9 @@ def simd_reduce_mean(in1, dim, keepdim=False, mx_specs=None):
 
     mx_specs = apply_mx_specs(mx_specs)
 
-    # np.product returns 1.0 for empty list
+    # np.prod returns 1.0 for empty list
     dim = dim if type(dim) is list else [dim]
-    denom = np.product([in1.shape[i] for i in dim])
+    denom = np.prod([in1.shape[i] for i in dim])
 
     s = SIMDReduceSum.apply(in1, dim, keepdim, mx_specs)
     return SIMDMul.apply(s, 1/denom, mx_specs)
