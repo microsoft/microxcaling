@@ -23,14 +23,8 @@ basic MX/bfloat quantization. The custom CUDA code is faster, and in the case of
 MX more numerically accurate than pytorch GPU. See [Pytorch CUDA Bugs](#Pytorch-CUDA-Bugs).
 
 ## Requirements ##
-Required system packages:
- * CUDA
- * ninja-build
-
-Python packages:
- * pytorch with CUDA support
- * pytest
- * numpy
+CUDA is required (11.3+ recommended).
+For Python packages see ```requirements.txt```.
 
 ## Trademark Notice ##
 **Trademarks** This project may contain trademarks or logos for projects, products,
@@ -206,6 +200,7 @@ There is a unit test suite provided with this library under the
 
 The unit tests have been tested to pass on these configurations:
  * pytorch-1.13.0 + cuda11.6 + Nvidia V100
+ * pytorch-2.1.0 + cuda12.1 + Nvidia V100
 
 ## Numerics ##
 ### Pytorch CUDA Inaccuracies ###

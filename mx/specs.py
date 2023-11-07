@@ -52,7 +52,6 @@ import collections
 import argparse
 import json
 import traceback
-from termcolor import colored
 
 # Change this to True to enable an assert test
 # in every MX user-facing function and class
@@ -344,9 +343,9 @@ def mx_assert_test(mx_specs):
 
         msg = (
             "MX assert test failed!\n"
-            + colored(f"mx_specs is None in function {f1.name}\n", "red")
-            + colored(f"Called from {f2.filename}, line {f2.lineno}\n", "yellow")
-            + colored(f"  {f2.line}", "yellow")
+            + f"mx_specs is None in function {f1.name}\n"
+            + f"Called from {f2.filename}, line {f2.lineno}\n"
+            + f"  {f2.line}"
         )
         raise ValueError(msg)
 
