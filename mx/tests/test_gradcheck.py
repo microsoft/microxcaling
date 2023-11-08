@@ -10,7 +10,6 @@ import torch
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs
 from mx import (
         linear, matmul, bmm, conv1d, conv2d, conv3d,
         sigmoid, tanh, relu, leaky_relu, silu, gelu,

@@ -11,7 +11,7 @@ import numpy as np
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import Softmax
 
 
@@ -42,7 +42,7 @@ class SoftmaxExp2Base(torch.nn.Module):
     (torch.device("cuda"), True)
 ])
 def test_softmax(size, device, custom_cuda):
-    mx_specs = apply_mx_specs(None)
+    mx_specs = finalize_mx_specs({}, early_exit=False)
     iterations = 5
 
     for _ in range(iterations):
@@ -87,7 +87,7 @@ def test_softmax_exp2(size, quantize_backprop, device, custom_cuda):
              'softmax_exp2': True,
              'quantize_backprop': quantize_backprop,
              'custom_cuda': custom_cuda}
-    specs2 = apply_mx_specs(specs2)
+    specs2 = finalize_mx_specs(specs2, early_exit=False)
 
     iterations = 5
 

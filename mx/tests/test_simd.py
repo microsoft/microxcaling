@@ -11,7 +11,7 @@ import torch
 from .common_lib import check_diff
 
 
-from mx.specs import apply_mx_specs
+from mx.specs import finalize_mx_specs
 from mx.simd_ops import *
 
 np.random.seed(0xdeadbeef)
@@ -45,10 +45,11 @@ def test_simd1(f1, f2, nargs, quantize_backprop,
 
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     _x = np.random.randn(*SIZE)
     _y = np.random.randn(*SIZE)
@@ -101,10 +102,11 @@ def test_const(f1, f2, quantize_backprop, device, custom_cuda):
 
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     _x = np.random.randn(*SIZE)
     x1 = torch.tensor(_x, dtype=torch.float32, device=device,
@@ -140,10 +142,11 @@ def test_simd_reduce(f1, f2, dim, quantize_backprop,
 
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     _x = np.random.randn(*SIZE)
     x1 = torch.tensor(_x, dtype=torch.float32, device=device,
@@ -188,9 +191,10 @@ def test_simd_broadcast(f1, f2, size1, size2, device, custom_cuda):
 
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     _x = np.random.randn(*size1)
     _y = np.random.randn(*size2)

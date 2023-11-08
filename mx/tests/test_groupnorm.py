@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs, get_default_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import GroupNorm
 
 np.random.seed(0xdeadbeef)
@@ -44,10 +44,11 @@ DEVICE__CUSTOM_CUDA = [
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
 def test_class(c1, c2, shape, num_groups, eps, device, custom_cuda):
     # No-quantization mx specs
-    mx_specs = apply_mx_specs(None, get_default_mx_specs())
+    mx_specs = {}
     mx_specs['bfloat'] = 32
     mx_specs['quantize_backprop'] = True
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     # Groupnorm is hardcoded to treat dim=1 as the hidden dim
     H = shape[0]

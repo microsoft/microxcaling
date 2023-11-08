@@ -12,7 +12,6 @@ import torch.nn.functional as F
 
 from .common_lib import check_diff, torch_version_ge
 
-from mx.specs import apply_mx_specs
 from mx import *
 
 np.random.seed(0xdeadbeef)

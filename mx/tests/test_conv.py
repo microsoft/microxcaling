@@ -10,7 +10,7 @@ import torch
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import (
     Conv1d, Conv2d, Conv3d,
     ConvTranspose2d, conv2d
@@ -48,10 +48,11 @@ def test_conv(C1, C2, in_channels, out_channels, groups, filter_size,
 
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     if C2 is Conv1d:
         num_spatial_dims = 1

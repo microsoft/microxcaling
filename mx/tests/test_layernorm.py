@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import LayerNorm, RMSNorm
 
 np.random.seed(0xdeadbeef)
@@ -58,10 +58,11 @@ class BaseRMSNorm(torch.nn.Module):
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
 def test_class(c1, c2, size, eps, quantize_backprop, device, custom_cuda):
     # No-quantization mx specs
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     # Create shared input for two networks
     m_ = np.random.randn(10, size)
@@ -100,10 +101,11 @@ def test_class(c1, c2, size, eps, quantize_backprop, device, custom_cuda):
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
 def test_network(c1, c2, eps, quantize_backprop, device, custom_cuda):
     # No-quantization mx specs
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     channels_1 = 3
     channels_2 = 7

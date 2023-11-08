@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
 np.random.seed(0xdeadbeef)
@@ -61,10 +61,11 @@ def create_input(test_class, H, l1=15, l2=14, l3=13):
 def test_class(c1, c2, H, eps, momentum, is_training,
                track_running_stats, device, custom_cuda):
     # No-quantization mx specs
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = True
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     m_ = create_input(c2, H)
     m1 = torch.tensor(m_, dtype=torch.float32, device=device, requires_grad=True)
@@ -130,10 +131,11 @@ def test_class(c1, c2, H, eps, momentum, is_training,
 def test_network(c1, c2, H, eps, momentum, is_training,
                  track_running_stats, device, custom_cuda):
     # No-quantization mx specs
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = True
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     m_ = create_input(c2, H)
     m1 = torch.tensor(m_, dtype=torch.float32, device=device, requires_grad=True)

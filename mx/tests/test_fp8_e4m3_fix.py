@@ -31,7 +31,7 @@ def test_fp8_e4m3_fix_pytorch():
 
 
 def test_fp8_e4m3_fix_cpp():
-    """ test quantize_mxfp_func_cpp """
+    """ test quantize_mx_func_cpp """
     x = torch.tensor(_x, dtype=torch.float32)
     t = torch.tensor(_t, dtype=torch.float32)
     
@@ -43,7 +43,7 @@ def test_fp8_e4m3_fix_cpp():
 
 
 def test_fp8_e4m3_fix_innermost_cuda():
-    """ test quantize_mxfp_innermost_cuda """
+    """ test quantize_mx_innermost_cuda """
     x = torch.tensor(_x, dtype=torch.float32)
     t = torch.tensor(_t, dtype=torch.float32)
 
@@ -56,7 +56,7 @@ def test_fp8_e4m3_fix_innermost_cuda():
 
 
 def test_fp8_e4m3_fix_by_tile_cuda():
-    """ test quantize_mxfp_by_tile_func_cuda """
+    """ test quantize_mx_by_tile_func_cuda """
     _xn = _x + [0]
     _tn = _t + [0]
     x = torch.tensor(_xn, dtype=torch.float32)
@@ -71,7 +71,7 @@ def test_fp8_e4m3_fix_by_tile_cuda():
 
 
 def test_fp8_e4m3_fix_func_cuda():
-    """ test quantize_mxfp_func_cuda,
+    """ test quantize_mx_func_cuda,
         this is supposed to throw an exception """
     _xn = _x + 56*[0]  # length 64
     _tn = _t + 56*[0]

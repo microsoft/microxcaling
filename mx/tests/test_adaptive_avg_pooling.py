@@ -13,7 +13,7 @@ import torch.nn.functional as F
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs, get_default_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import adaptive_avg_pool2d
 from mx import AdaptiveAvgPool2d 
 
@@ -42,10 +42,11 @@ DEVICE__CUSTOM_CUDA = [
 @pytest.mark.parametrize("quantize_backprop", [False, True])
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
 def test_pooling(f1, f2, input_size_4D, out_size, quantize_backprop, device, custom_cuda):
-    mx_specs = apply_mx_specs(None, get_default_mx_specs())
+    mx_specs = {}
     mx_specs['bfloat'] = 30
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     # Create shared input for two networks
     m_ = np.random.randn(input_size_4D[0], input_size_4D[1], input_size_4D[2], input_size_4D[3])
@@ -84,10 +85,11 @@ def test_pooling(f1, f2, input_size_4D, out_size, quantize_backprop, device, cus
 def test_pooling_class(c1, c2, input_size_4D, out_size,  device, custom_cuda):
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None, get_default_mx_specs())
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = True
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     # Create shared input for two networks
     m_ = np.random.randn(input_size_4D[0], input_size_4D[1], input_size_4D[2], input_size_4D[3])
@@ -123,10 +125,11 @@ def test_pooling_class(c1, c2, input_size_4D, out_size,  device, custom_cuda):
 def test_network(c1, c2, input_size_2D, out_size,  quantize_backprop, device, custom_cuda):
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None, get_default_mx_specs())
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     channels_1 = 3
     channels_2 = 7

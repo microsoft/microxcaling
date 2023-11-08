@@ -4,7 +4,7 @@ Licensed under the MIT License.
 """
 
 from .specs import MxSpecs
-from .specs import add_mx_args
+from .specs import add_mx_args, finalize_mx_specs
 from .specs import get_mx_specs, get_backwards_mx_specs
 
 from .quantize import quantize_bfloat

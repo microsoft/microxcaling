@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import sigmoid, tanh, relu, relu6, leaky_relu, silu, gelu
 from mx import Sigmoid, Tanh, ReLU, ReLU6, LeakyReLU, SiLU, GELU
 
@@ -42,10 +42,11 @@ def torch_quick_gelu(x):
 @pytest.mark.parametrize("quantize_backprop", [False, True])
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
 def test_gelu(first_order, size, quantize_backprop, device, custom_cuda):
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 30
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     # Create shared input for two networks
     m_ = np.random.randn(size)
@@ -86,10 +87,11 @@ def test_gelu(first_order, size, quantize_backprop, device, custom_cuda):
 def test_activation(f1, f2, size, quantize_backprop, device, custom_cuda):
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 30
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
     kwargs = {'negative_slope': 0.4} if f2 is leaky_relu else {}
 
     # Create shared input for two networks
@@ -125,10 +127,11 @@ def test_activation(f1, f2, size, quantize_backprop, device, custom_cuda):
 def test_activation_class(c1, c2, size, device, custom_cuda):
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = True
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     # Create shared input for two networks
     m_ = np.random.randn(size)
@@ -162,10 +165,11 @@ def test_activation_class(c1, c2, size, device, custom_cuda):
 def test_network(c1, c2, inplace, quantize_backprop, device, custom_cuda):
     # mx specs. Use a large bitwidth since we're testing
     # algorithmic correctness, not precision
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     channels_1 = 3
     channels_2 = 7
@@ -210,9 +214,10 @@ def test_network(c1, c2, inplace, quantize_backprop, device, custom_cuda):
 @pytest.mark.parametrize("inplace", [True, False])
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
 def test_inplace(func, inplace, device, custom_cuda):
-    mx_specs = apply_mx_specs(None)
+    mx_specs = {}
     mx_specs['bfloat'] = 10
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     # Create shared input for two networks
     # (batch, in_channels, height, width)

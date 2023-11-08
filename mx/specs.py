@@ -332,7 +332,12 @@ def get_mx_specs(parsed_args: argparse.Namespace):
             if hasattr(parsed_args, k):
                 parsed_specs[k] = parsed_args.__getattribute__(k)
 
-    return finalize_mx_specs(parsed_specs, early_exit=not parsed_args.skip_early_exit)
+    if hasattr(parsed_args, "skip_early_exit"):
+        early_exit = not parsed_args.skip_early_exit
+    else:
+        early_exit = True
+
+    return finalize_mx_specs(parsed_specs, early_exit=early_exit)
 
 
 def mx_assert_test(mx_specs):

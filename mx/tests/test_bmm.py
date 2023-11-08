@@ -12,7 +12,7 @@ import torch.nn.functional as F
 
 from .common_lib import check_diff
 
-from mx.specs import apply_mx_specs
+from mx.specs import finalize_mx_specs
 from mx import linear, matmul, bmm
 
 np.random.seed(0xdeadbeef)
@@ -41,7 +41,7 @@ def t_bmm_core(f1, f2, shape, device, mx_specs, tolf=1e-6, tolb=1e-5):
     loss1.backward()
     torch.cuda.synchronize()
 
-    # MXFP library
+    # MX library
     q2 = f2(m2, w2, mx_specs=mx_specs)
     loss2 = (q2**2).mean().sqrt()
     loss2.backward()
@@ -66,10 +66,11 @@ def t_bmm_core(f1, f2, shape, device, mx_specs, tolf=1e-6, tolb=1e-5):
 def test_bmm(f1, f2, shape, quantize_backprop, device, custom_cuda):
     torch.backends.cudnn.deterministic = True
 
-    # No mxfp quantization since we're testing correctness not precision
-    mx_specs = apply_mx_specs(None)
+    # No mx quantization since we're testing correctness not precision
+    mx_specs = {}
     mx_specs['bfloat'] = 0
     mx_specs['quantize_backprop'] = quantize_backprop
     mx_specs['custom_cuda'] = custom_cuda
+    mx_specs = finalize_mx_specs(mx_specs, early_exit=False)
 
     t_bmm_core(f1, f2, shape, device, mx_specs, tolf=1e-6, tolb=1e-5)

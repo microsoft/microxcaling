@@ -58,7 +58,7 @@ def test_mx_nans(val, elem_format, device, custom_cuda):
 
 # Tests that the 2's complement 1000 representation is not used
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
-def test_mxfp_rounding(device, custom_cuda):
+def test_mx_rounding(device, custom_cuda):
     x = np.array([[-1.0,  -1.75, -1.99,  1.99],  # -2.0 is not used
                   [ 1.0,  -1.75, -1.99,  1.99],])
 

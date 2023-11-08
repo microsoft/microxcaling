@@ -1,8 +1,6 @@
 """
 Copyright (c) Microsoft Corporation.
 Licensed under the MIT License.
-
-Test MX and mxfp emulation to guarantee exact match.
 """
 
 import pytest
