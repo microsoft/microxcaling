@@ -38,6 +38,23 @@ logos are subject to those third-party’s policies.
 The repo contains a PDF guide to integrating MX into your PyTorch models.
 The ```examples``` folders also contains working code samples.
 
+## CUDA Extensions ##
+The MX library is implemented in both Pytorch and C++/CUDA, with the latter
+being much faster and more memory-efficient. The C++/CUDA code is built as
+a Pytorch extension, and are enabled by by setting ```custom_cuda=True```.
+
+There are two ways of building the extensions:
+ * Ahead of Time. This involves going to the ```mx/cpp``` folder and running
+   ```python setup.py install```. It will install an mx_ext Python package.
+ * Just-In-Time (JIT). This requires no actions, and is the fallback if
+   the mx_ext package is not available.
+
+The JIT build is triggered the first time the MX library tries to call
+the CUDA functions. This will happen *in every process* in the case of
+a multi-process training job (e.g., using torch.distributed) and may
+lead to a race condition. For such jobs we recommend building the
+CUDA extensions ahead of time.
+
 ## Files ##
 #### Configuration ####
  * specs.py: configurable settings for MX and bfloat quantization, functions
