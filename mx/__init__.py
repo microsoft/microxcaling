@@ -17,6 +17,8 @@ from .convolution import Conv1d, Conv2d, Conv3d
 from .convolution import conv1d, conv2d, conv3d
 from .transpose_convolution import ConvTranspose2d
 
+from .rnn import LSTM
+
 from .activations import sigmoid, tanh, relu, relu6, leaky_relu, silu, gelu
 from .activations import Sigmoid, Tanh, ReLU, ReLU6, LeakyReLU, SiLU, GELU
 
