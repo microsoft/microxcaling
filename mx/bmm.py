@@ -11,6 +11,9 @@ from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
 
+torch_bmm = torch.bmm
+
+
 class BMMFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, in1, in2, mx_specs, name):
@@ -49,7 +52,7 @@ class BMMFunction(torch.autograd.Function):
         )
 
         # compute output
-        out = torch.bmm(qin1, qin2)
+        out = torch_bmm(qin1, qin2)
 
         # element-wise quantize for output
         out = quantize_elemwise_op(
@@ -103,8 +106,8 @@ class BMMFunction(torch.autograd.Function):
         )
 
         # compute grad_in1 and grad_in2
-        grad_in1 = torch.bmm(qgrad_out1, qin2.transpose(-1, -2))
-        grad_in2 = torch.bmm(qin1.transpose(-1, -2), qgrad_out2)
+        grad_in1 = torch_bmm(qgrad_out1, qin2.transpose(-1, -2))
+        grad_in2 = torch_bmm(qin1.transpose(-1, -2), qgrad_out2)
 
         # element-wise quantize for grad_in1 and grad_in2
         grad_in1 = quantize_elemwise_op(
@@ -124,7 +127,7 @@ class BMMFunction(torch.autograd.Function):
 def bmm(in1, in2, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.bmm(in1, in2)
+        return torch_bmm(in1, in2)
 
     mx_specs = apply_mx_specs(mx_specs)
 

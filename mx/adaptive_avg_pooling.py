@@ -12,6 +12,7 @@ from .vector_ops import *
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
+f_adaptive_avg_pool2d = F.adaptive_avg_pool2d
 
 #-------------------------------------------------------------------------
 # User-facing functions
@@ -19,7 +20,7 @@ from .specs import mx_assert_test
 def adaptive_avg_pool2d(input, output_size, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return F.adaptive_avg_pool2d(input, output_size)
+        return f_adaptive_avg_pool2d(input, output_size)
     
     mx_specs = apply_mx_specs(mx_specs)
     return AdaptiveAvgPool2dFunction.apply(input, output_size, mx_specs, name)
@@ -41,7 +42,7 @@ class AdaptiveAvgPool2d(nn.Module):
 
     def forward(self, inputs):
         if self.mx_none:
-            return F.adaptive_avg_pool2d(inputs, self.output_size)
+            return f_adaptive_avg_pool2d(inputs, self.output_size)
         return AdaptiveAvgPool2dFunction.apply(inputs, self.output_size, self.mx_specs, self.name)
 
 

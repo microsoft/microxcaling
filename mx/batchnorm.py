@@ -11,6 +11,8 @@ from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 from .norm_utils import _norm_forward, _norm_backward
 
+f_batch_norm = F.batch_norm
+
 class BatchNormFunction(torch.autograd.Function):
     """ Batch Normalization applied over N-dimensional input.
 
@@ -133,7 +135,7 @@ def batch_norm(x, running_mean, running_var,
                mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.nn.functional.batch_norm(
+        return f_batch_norm(
                 x, running_mean, running_var, weight, bias,
                 is_training, momentum, eps)
 

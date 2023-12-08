@@ -11,6 +11,8 @@ from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 from .norm_utils import _norm_forward, _norm_backward
 
+f_group_norm = F.group_norm
+
 class GroupNormFunction(torch.autograd.Function):
     """ input is (N, C, ...) where C is channels
         Split channels into num_groups and normalize each group
@@ -80,7 +82,7 @@ def group_norm(x, num_groups, weight, bias, eps=1e-5,
                mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.nn.functional.group_norm(
+        return f_group_norm(
                 x, num_groups, weight=weight, bias=bias, eps=eps)
 
     mx_specs = apply_mx_specs(mx_specs)

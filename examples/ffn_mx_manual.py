@@ -34,7 +34,7 @@ class ResidualMLP(torch.nn.Module):
         inputs, residual = simd_split(inputs)
 
         norm_outputs = self.layernorm(inputs)
-        
+
         # MLP
         proj_outputs = self.dense_4h(norm_outputs)
         proj_outputs = gelu(proj_outputs,

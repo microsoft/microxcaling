@@ -11,8 +11,9 @@ from .vector_ops import *
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
-
+f_softmax = F.softmax
 LN_2_BF16 = 0.69140625   # ln(2) in bfloat16 precision
+
 
 class SoftmaxFunction(torch.autograd.Function):
     @staticmethod
@@ -91,7 +92,7 @@ class SoftmaxFunction(torch.autograd.Function):
 def softmax(input, dim=-1, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.nn.functional.softmax(input, dim=dim)
+        return f_softmax(input, dim=dim)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SoftmaxFunction.apply(

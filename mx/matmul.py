@@ -11,6 +11,9 @@ from .elemwise_ops import quantize_elemwise_op
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
+torch_matmul = torch.matmul
+torch_addmm = torch.addmm
+
 
 class MatMulFunction(torch.autograd.Function):
     """Matches functionality of torch.matmul. Attempts to broadcast
@@ -76,7 +79,7 @@ class MatMulFunction(torch.autograd.Function):
             round=mx_specs["round_mx_output"],
         )
 
-        out = torch.matmul(qin1, qin2)
+        out = torch_matmul(qin1, qin2)
         out = quantize_elemwise_op(
             out, mx_specs=mx_specs, round=mx_specs["round_output"]
         )
@@ -153,8 +156,8 @@ class MatMulFunction(torch.autograd.Function):
         )
 
         # compute grad_in1 and grad_in2
-        grad_in1 = torch.matmul(qgrad_out1, qin2.transpose(-1, -2))
-        grad_in2 = torch.matmul(qin1.transpose(-1, -2), qgrad_out2)
+        grad_in1 = torch_matmul(qgrad_out1, qin2.transpose(-1, -2))
+        grad_in2 = torch_matmul(qin1.transpose(-1, -2), qgrad_out2)
 
         # element-wise quantize for grad_in1 and grad_in2
         grad_in1 = quantize_elemwise_op(
@@ -192,9 +195,9 @@ def matmul(in1, in2, bias=None, mx_specs=None, name=None, mode_config='aa'):
     mx_assert_test(mx_specs)
     if mx_specs is None:
         if bias is None:
-            out = torch.matmul(in1, in2)
+            out = torch_matmul(in1, in2)
         else:
-            out = torch.addmm(bias, in1, in2)
+            out = torch_addmm(bias, in1, in2)
         return out
 
     mx_specs = apply_mx_specs(mx_specs)

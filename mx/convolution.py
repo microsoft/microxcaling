@@ -14,6 +14,14 @@ from .elemwise_ops import quantize_elemwise_op
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
+f_conv1d = torch.nn.functional.conv1d
+f_conv2d = torch.nn.functional.conv2d
+f_conv3d = torch.nn.functional.conv3d
+
+torch_conv1d = torch.nn.Conv1d
+torch_conv2d = torch.nn.Conv2d
+torch_conv3d = torch.nn.Conv3d
+
 
 def conv_weight(
     input, weight_shape, grad_output, stride=1, padding=0, dilation=1, groups=1
@@ -27,15 +35,15 @@ def conv_weight(
     num_spatial_dims = input.ndim - 2
     if num_spatial_dims == 1:
         _p = _single
-        _conv = torch.nn.functional.conv1d
+        _conv = f_conv1d
         _conv_weight = grad.conv1d_weight
     elif num_spatial_dims == 2:
         _p = _pair
-        _conv = torch.nn.functional.conv2d
+        _conv = f_conv2d
         _conv_weight = grad.conv2d_weight
     elif num_spatial_dims == 3:
         _p = _triple
-        _conv = torch.nn.functional.conv3d
+        _conv = f_conv3d
         _conv_weight = grad.conv3d_weight
     else:
         raise ValueError(
@@ -135,13 +143,13 @@ class ConvFunction(torch.autograd.Function):
         num_spatial_dims = input.ndim - 2
         assert num_spatial_dims in (1, 2, 3)
         if num_spatial_dims == 1:
-            fwd_func = torch.conv1d
+            fwd_func = torch_conv1d
             ctx.conv_input = grad.conv1d_input
         elif num_spatial_dims == 2:
-            fwd_func = torch.conv2d
+            fwd_func = torch_conv2d
             ctx.conv_input = grad.conv2d_input
         elif num_spatial_dims == 3:
-            fwd_func = torch.conv3d
+            fwd_func = torch_conv3d
             ctx.conv_input = grad.conv3d_input
 
         # round with mx_specs['round_output']
@@ -320,7 +328,7 @@ def conv1d(
 ):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.nn.functional.conv1d(
+        return f_conv1d(
             input,
             weight,
             bias=bias,
@@ -350,7 +358,7 @@ def conv2d(
 ):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.nn.functional.conv2d(
+        return f_conv2d(
             input,
             weight,
             bias=bias,
@@ -380,7 +388,7 @@ def conv3d(
 ):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.nn.functional.conv3d(
+        return f_conv3d(
             input,
             weight,
             bias=bias,
