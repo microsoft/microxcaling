@@ -35,8 +35,18 @@ confusion or imply Microsoft sponsorship. Any use of third-party trademarks or
 logos are subject to those third-party’s policies.
 
 ## Integration Guide ##
-The repo contains a PDF guide to integrating MX into your PyTorch models.
+There are two ways to integrate the library into your PyTorch models.
+ - Manually replace each PyTorch module (```torch.nn.*```) and PyTorch function (```torch.nn.function.*```)
+   with its equivalent mx library module/function in the model code.
+   This is time-consuming and error-prone, but gives users control.
+ - Use ```mx_mapping.inject_pyt_ops``` to replace PyTorch modules/functions in
+   the global python scope, then build your model.
+
+The repo contains a PDF guide for manual integration.
 The ```examples``` folders also contains working code samples.
+ * ```ffn.py```: base model
+ * ```ffn_mx_manual.py```: manual integration
+ * ```ffn_mx_auto.py```: auto-inject
 
 ## Files ##
 #### Configuration ####

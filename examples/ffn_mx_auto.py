@@ -3,6 +3,9 @@ import torch.nn.functional as F
 import numpy as np
 import argparse
 
+from mx import finalize_mx_specs
+from mx import mx_mapping
+
 class ResidualMLP(torch.nn.Module):
     def __init__(self, hidden_size):
         super(ResidualMLP, self).__init__()
@@ -41,6 +44,23 @@ if __name__ == '__main__':
     parser.add_argument("--hidden_size", default=128)
     parser.add_argument("--device", default='cuda')
     args = parser.parse_args()
+
+    # Simple MX spec for MXFP6 weights+activations
+    mx_specs = {
+        'w_elem_format': 'fp6_e3m2',
+        'a_elem_format': 'fp6_e3m2',
+        'block_size': 32,
+        'bfloat': 16,
+        'custom_cuda': True,
+        # For quantization-aware finetuning, do backward pass in FP32
+        'quantize_backprop': False,
+    }
+    mx_specs = finalize_mx_specs(mx_specs)
+
+    # Auto-inject MX modules and functions
+    # This will replace certain torch.nn.* and torch.nn.functional.*
+    # modules/functions in the global namespace!
+    mx_mapping.inject_pyt_ops(mx_specs)
 
     # Run MLP
     x = np.random.randn(16, args.hidden_size)
