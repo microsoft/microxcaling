@@ -103,7 +103,7 @@ FUNCTION_MAPPING = {
     "relu6": relu6,
     "sigmoid": sigmoid,
     "silu": silu,
-    # "softmax": softmax, # Causes NaNs?
+    "softmax": softmax, # Causes NaNs?
     "tanh": tanh,
     "add": simd_add,
     "sub": simd_sub,
