@@ -27,6 +27,10 @@ import numpy as np
 
 from .elemwise_ops import quantize_elemwise_op
 
+torch_exp = torch.exp
+torch_exp2 = torch.exp2
+torch_sqrt = torch.sqrt
+torch_tanh = torch.tanh
 LN_2_EXACT = 0.69314718056
 LOG2_E_BF16 = 1.4453125  # 1 + 2**-2 + 2**-3 + 2**-4 + 2**-7
 
@@ -72,7 +76,7 @@ def vec_exp(input, mx_specs=None, round=None):
                                    mx_specs=mx_specs, round=round)
         phi = vec_exp2(phi, mx_specs=mx_specs, round=round)
     else:
-        phi = quantize_elemwise_op(torch.exp(input),
+        phi = quantize_elemwise_op(torch_exp(input),
                                    mx_specs=mx_specs, round=round)
     return phi
 
@@ -80,12 +84,12 @@ def vec_exp(input, mx_specs=None, round=None):
 def vec_exp2(input, mx_specs=None, round=None):
     # Pytorch 1.2 does not have exp2
     if hasattr(torch, 'exp2'):
-        phi = quantize_elemwise_op(torch.exp2(input),
+        phi = quantize_elemwise_op(torch_exp2(input),
                                    mx_specs=mx_specs, round=round)
     else:
         # Here we're trying to emulate torch.exp2 with torch.exp,
         # so the constant is exact
-        phi = quantize_elemwise_op(torch.exp(input * LN_2_EXACT),
+        phi = quantize_elemwise_op(torch_exp(input * LN_2_EXACT),
                                    mx_specs=mx_specs, round=round)
     return phi
 
@@ -96,12 +100,12 @@ def vec_recip(input, mx_specs=None, round=None):
 
 
 def vec_sqrt(input, mx_specs=None, round=None):
-    return quantize_elemwise_op(torch.sqrt(input), mx_specs=mx_specs,
+    return quantize_elemwise_op(torch_sqrt(input), mx_specs=mx_specs,
                                 round=round)
 
 
 def vec_tanh(input, mx_specs=None, round=None):
-    return quantize_elemwise_op(torch.tanh(input), mx_specs=mx_specs,
+    return quantize_elemwise_op(torch_tanh(input), mx_specs=mx_specs,
                                 round=round)
 
 

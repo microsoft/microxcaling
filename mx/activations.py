@@ -11,13 +11,24 @@ from .vector_ops import *
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
+torch_sigmoid = torch.sigmoid
+torch_tanh = torch.tanh
+torch_relu = torch.relu
+torch_relu_ = torch.relu_
+f_silu = torch.nn.functional.silu
+f_gelu = torch.nn.functional.gelu
+f_relu = torch.nn.functional.relu
+f_relu6 = torch.nn.functional.relu6
+f_leaky_relu = torch.nn.functional.leaky_relu
+
+
 #-------------------------------------------------------------------------
 # User-facing functions
 #-------------------------------------------------------------------------
 def sigmoid(input, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.sigmoid(input)
+        return torch_sigmoid(input)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SigmoidFunction.apply(input, mx_specs, name)
@@ -26,7 +37,7 @@ def sigmoid(input, mx_specs=None, name=None):
 def tanh(input, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.tanh(input)
+        return torch_tanh(input)
 
     mx_specs = apply_mx_specs(mx_specs)
     return TanhFunction.apply(input, mx_specs, name)
@@ -35,7 +46,7 @@ def tanh(input, mx_specs=None, name=None):
 def relu(input, inplace=False, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return F.relu(input, inplace=inplace)
+        return f_relu(input, inplace=inplace)
 
     mx_specs = apply_mx_specs(mx_specs)
     return ReLUFunction.apply(input, inplace, mx_specs, name)
@@ -44,7 +55,7 @@ def relu(input, inplace=False, mx_specs=None, name=None):
 def relu6(input, inplace=False, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return F.relu6(input, inplace=inplace)
+        return f_relu6(input, inplace=inplace)
 
     mx_specs = apply_mx_specs(mx_specs)
     return ReLU6Function.apply(input, inplace, mx_specs, name)
@@ -54,7 +65,7 @@ def leaky_relu(input, negative_slope=0.01, inplace=False,
                mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return F.leaky_relu(input, negative_slope=negative_slope,
+        return f_leaky_relu(input, negative_slope=negative_slope,
                             inplace=inplace)
 
     mx_specs = apply_mx_specs(mx_specs)
@@ -65,7 +76,7 @@ def leaky_relu(input, negative_slope=0.01, inplace=False,
 def silu(input, inplace=False, mx_specs=None, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return F.silu(input, inplace=inplace)
+        return f_silu(input, inplace=inplace)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SiLUFunction.apply(input, inplace, mx_specs, name)
@@ -74,7 +85,7 @@ def silu(input, inplace=False, mx_specs=None, name=None):
 def gelu(input, mx_specs=None, first_order_gelu=False, name=None):
     mx_assert_test(mx_specs)
     if mx_specs is None and first_order_gelu == False:
-        return F.gelu(input)
+        return f_gelu(input)
 
     mx_specs = apply_mx_specs(mx_specs)
     return GELUFunction.apply(
@@ -287,12 +298,12 @@ class ReLUFunction(torch.autograd.Function):
         # No need to quantize input first since ReLU just masks
         if inplace:
             ctx.mark_dirty(input)
-            input = torch.relu_(input)
+            input = torch_relu_(input)
             output = vec_quantize(input, mx_specs=mx_specs)
             input.copy_(output)
             output = input
         else:
-            output = torch.relu(input)
+            output = torch_relu(input)
             output = vec_quantize(output, mx_specs=mx_specs)
 
         # Stash the ReLU mask
@@ -328,12 +339,12 @@ class ReLU6Function(torch.autograd.Function):
         # No need to quantize input first since ReLU just masks
         if inplace:
             ctx.mark_dirty(input)
-            input = F.relu6(input, inplace=True)
+            input = f_relu6(input, inplace=True)
             output = vec_quantize(input, mx_specs=mx_specs)
             input.copy_(output)
             output = input
         else:
-            output = F.relu6(input)
+            output = f_relu6(input)
             output = vec_quantize(output, mx_specs=mx_specs)
 
         # Stash the ReLU6 mask
@@ -367,7 +378,7 @@ class LeakyReLUFunction(torch.autograd.Function):
         ctx.name = name
 
         q_in       = vec_quantize(input, mx_specs=mx_specs)
-        output     = F.leaky_relu(q_in, negative_slope=negative_slope)
+        output     = f_leaky_relu(q_in, negative_slope=negative_slope)
         output     = vec_quantize(output, mx_specs=mx_specs)
 
         if inplace:

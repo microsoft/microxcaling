@@ -4,8 +4,7 @@ Licensed under the MIT License.
 """
 
 import torch
-
-from torch.nn.functional import conv_transpose2d
+import torch.nn.functional as F
 
 from .mx_ops import quantize_mx_op
 from .elemwise_ops import quantize_elemwise_op
@@ -13,6 +12,8 @@ from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 from .convolution import conv_weight
 
+f_conv_transpose2d = F.conv_transpose2d
+torch_conv2d = torch.conv2d
 
 class ConvTranspose2dFunction(torch.autograd.Function):
     """Note that stride, padding, etc will be stored as
@@ -86,7 +87,7 @@ class ConvTranspose2dFunction(torch.autograd.Function):
         )
 
         # compute output
-        output = conv_transpose2d(
+        output = f_conv_transpose2d(
             qid_input,
             qid_weight,
             bf_bias,
@@ -173,7 +174,7 @@ class ConvTranspose2dFunction(torch.autograd.Function):
         )
 
         # compute grad_input
-        grad_input = torch.conv2d(
+        grad_input = torch_conv2d(
             qod_grad_output,
             qod_weight,
             bias=None,

@@ -11,6 +11,8 @@ from .elemwise_ops import quantize_elemwise_op
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
+f_linear = F.linear
+torch_matmul = torch.matmul
 
 class LinearFunction(torch.autograd.Function):
     @staticmethod
@@ -63,7 +65,7 @@ class LinearFunction(torch.autograd.Function):
         )
 
         # compute output
-        output = F.linear(qis_input, qis_weight)
+        output = f_linear(qis_input, qis_weight)
         output = quantize_elemwise_op(
             output, mx_specs=mx_specs, round=mx_specs["round_output"]
         )
@@ -117,7 +119,7 @@ class LinearFunction(torch.autograd.Function):
         qex_input = qex_input.reshape(-1, in_dim)
 
         # Compute grad_weight
-        grad_weight = torch.matmul(qex_grad_output.transpose(0, 1), qex_input)
+        grad_weight = torch_matmul(qex_grad_output.transpose(0, 1), qex_input)
         grad_weight = quantize_elemwise_op(
             grad_weight,
             mx_specs=ctx.mx_specs,
@@ -145,7 +147,7 @@ class LinearFunction(torch.autograd.Function):
         )
 
         # Compute grad_input
-        grad_input = torch.matmul(qos_grad_output, qos_weight)
+        grad_input = torch_matmul(qos_grad_output, qos_weight)
         grad_input = quantize_elemwise_op(
             grad_input,
             mx_specs=ctx.mx_specs,
@@ -177,7 +179,7 @@ def linear(
 ):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.nn.functional.linear(input, weight, bias=bias)
+        return f_linear(input, weight, bias=bias)
 
     mx_specs = apply_mx_specs(mx_specs)
 

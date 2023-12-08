@@ -28,6 +28,13 @@ from .vector_ops import *
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 
+torch_sum = torch.sum
+torch_mean = torch.mean
+torch_sqrt = torch.sqrt
+torch_exp = torch.exp
+torch_log = torch.log
+torch_square = torch.square
+
 
 def _broadcast_gradient(grad_out, in_shape, mx_specs):
     """ Computes the gradient of y = broadcast_shape(x)
@@ -65,7 +72,7 @@ def _broadcast_gradient(grad_out, in_shape, mx_specs):
     # Quantize to bfloat if reduction is needed
     if len(reduce_dims) > 0:
         grad_out = vec_quantize(grad_out, mx_specs=mx_specs)
-        grad_in = torch.sum(grad_out, dim=reduce_dims)
+        grad_in = torch_sum(grad_out, dim=reduce_dims)
         grad_in = vec_quantize(grad_in, mx_specs=mx_specs)
         return grad_in.view(in_shape)
     else:
@@ -354,7 +361,7 @@ class SIMDLog(torch.autograd.Function):
         ctx.mx_specs = get_backwards_mx_specs(mx_specs)
 
         qin1 = vec_quantize(in1, mx_specs=mx_specs)
-        out = torch.log(qin1)
+        out = torch_log(qin1)
         out = vec_quantize(out, mx_specs=mx_specs)
 
         if mx_specs['quantize_backprop']:
@@ -465,7 +472,7 @@ def simd_split(in1, mx_specs=None):
 def simd_square(in1, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.square(in1)
+        return torch_square(in1)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SIMDSquare.apply(in1, mx_specs)
@@ -474,7 +481,7 @@ def simd_square(in1, mx_specs=None):
 def simd_sqrt(in1, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.sqrt(in1)
+        return torch_sqrt(in1)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SIMDSqrt.apply(in1, mx_specs)
@@ -483,7 +490,7 @@ def simd_sqrt(in1, mx_specs=None):
 def simd_exp(in1, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.exp(in1)
+        return torch_exp(in1)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SIMDExp.apply(in1, mx_specs)
@@ -492,7 +499,7 @@ def simd_exp(in1, mx_specs=None):
 def simd_log(in1, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.log(in1)
+        return torch_log(in1)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SIMDLog.apply(in1, mx_specs)
@@ -501,7 +508,7 @@ def simd_log(in1, mx_specs=None):
 def simd_reduce_sum(in1, dim, keepdim=False, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.sum(in1, dim, keepdim=keepdim)
+        return torch_sum(in1, dim, keepdim=keepdim)
 
     mx_specs = apply_mx_specs(mx_specs)
     return SIMDReduceSum.apply(in1, dim, keepdim, mx_specs)
@@ -510,7 +517,7 @@ def simd_reduce_sum(in1, dim, keepdim=False, mx_specs=None):
 def simd_reduce_mean(in1, dim, keepdim=False, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch.mean(in1, dim, keepdim=keepdim)
+        return torch_mean(in1, dim, keepdim=keepdim)
 
     mx_specs = apply_mx_specs(mx_specs)
 
