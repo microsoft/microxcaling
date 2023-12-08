@@ -25,7 +25,7 @@ from .activations import Sigmoid, Tanh, ReLU, ReLU6, LeakyReLU, SiLU, GELU
 from .adaptive_avg_pooling import adaptive_avg_pool2d, AdaptiveAvgPool2d
 
 from .batchnorm import BatchNorm1d, BatchNorm2d, BatchNorm3d
-from .layernorm import LayerNorm, RMSNorm
+from .layernorm import LayerNorm, RMSNorm, layer_norm
 from .groupnorm import GroupNorm
 
 from .simd_ops import simd_add, simd_sub, simd_mul, simd_div, simd_split

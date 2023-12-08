@@ -11,7 +11,7 @@ from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
 from .norm_utils import _norm_forward, _norm_backward_LN, _norm_backward
 
-torch_layer_norm = torch.nn.LayerNorm
+torch_layer_norm = F.layer_norm
 
 
 class LayerNormFunction(torch.autograd.Function):
@@ -201,10 +201,10 @@ class RMSNorm(torch.nn.LayerNorm):
     
 
 def layer_norm(input, normalized_shape, weight, bias, eps=1e-12,
-               msfp_specs=None, name=None):
-    mx_assert_test(msfp_specs)
-    if msfp_specs is None:
+               mx_specs=None, name=None):
+    mx_assert_test(mx_specs)
+    if mx_specs is None:
         return torch_layer_norm(input, normalized_shape, weight, bias, eps)
-    msfp_specs = apply_mx_specs(msfp_specs)
+    mx_specs = apply_mx_specs(mx_specs)
     assert(normalized_shape == weight.shape)
-    return LayerNormFunction.apply(input, weight, bias, eps, msfp_specs, name)
+    return LayerNormFunction.apply(input, weight, bias, eps, mx_specs, name)
