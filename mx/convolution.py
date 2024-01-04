@@ -18,10 +18,6 @@ f_conv1d = torch.nn.functional.conv1d
 f_conv2d = torch.nn.functional.conv2d
 f_conv3d = torch.nn.functional.conv3d
 
-torch_conv1d = torch.nn.Conv1d
-torch_conv2d = torch.nn.Conv2d
-torch_conv3d = torch.nn.Conv3d
-
 
 def conv_weight(
     input, weight_shape, grad_output, stride=1, padding=0, dilation=1, groups=1
@@ -143,13 +139,13 @@ class ConvFunction(torch.autograd.Function):
         num_spatial_dims = input.ndim - 2
         assert num_spatial_dims in (1, 2, 3)
         if num_spatial_dims == 1:
-            fwd_func = torch_conv1d
+            fwd_func = f_conv1d
             ctx.conv_input = grad.conv1d_input
         elif num_spatial_dims == 2:
-            fwd_func = torch_conv2d
+            fwd_func = f_conv2d
             ctx.conv_input = grad.conv2d_input
         elif num_spatial_dims == 3:
-            fwd_func = torch_conv3d
+            fwd_func = f_conv3d
             ctx.conv_input = grad.conv3d_input
 
         # round with mx_specs['round_output']
