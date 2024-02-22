@@ -82,10 +82,22 @@ def silu(input, inplace=False, mx_specs=None, name=None):
     return SiLUFunction.apply(input, inplace, mx_specs, name)
 
 
-def gelu(input, mx_specs=None, first_order_gelu=False, name=None):
+def gelu(input, mx_specs=None, first_order_gelu=False,
+         approximate=None, name=None):
+    """ The approximate arg is to match the torch function signature,
+        but the arg is mostly ignored.
+
+        In torch, approximate can be None or 'tanh'.
+        In our lib, we support tanh and first_order.
+        We hardcode the tanh approx for the baseline.
+    """
     mx_assert_test(mx_specs)
     if mx_specs is None and first_order_gelu == False:
-        return f_gelu(input)
+        try:
+            out = f_gelu(input, approximate='tanh')
+        except TypeError:
+            out = f_gelu(input)
+        return out
 
     mx_specs = apply_mx_specs(mx_specs)
     return GELUFunction.apply(
@@ -198,9 +210,10 @@ class SiLU(torch.nn.SiLU):
 
 
 class GELU(torch.nn.GELU):
-    """ Note that by default we're using the tanh (cubic)
-        axpproximation to GELU """
-    def __init__(self, mx_specs=None, first_order_gelu=False, name=None):
+    """ Note that the torch baseline is hardcoded to use the tanh
+        axpproximation to GELU. The approximate kwarg is ignored. """
+    def __init__(self, mx_specs=None, first_order_gelu=False,
+                 approximate=None, name=None):
         try:
             super().__init__(approximate='tanh')
         except TypeError:
