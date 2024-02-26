@@ -59,7 +59,8 @@ def test_gelu(first_order, size, quantize_backprop, device, custom_cuda):
         q2 = gelu(m2, mx_specs=mx_specs, first_order_gelu=True)
     else:
         q1 = torch_gelu(m1)
-        q2 = gelu(m2, mx_specs=mx_specs, first_order_gelu=False)
+        q2 = gelu(m2, mx_specs=mx_specs, first_order_gelu=False,
+                  approximate='tanh')
 
     loss1 = (q1**2).sum()
     loss1.backward()
