@@ -133,7 +133,7 @@ def test_const(f1, f2, quantize_backprop, device, custom_cuda):
     (torch.sum,     simd_reduce_sum),
     (torch.mean,    simd_reduce_mean),
 ])
-@pytest.mark.parametrize("dim", [[0], [1], [-1], [0,-1], [0,1,2]])
+@pytest.mark.parametrize("dim", [None, [0], [1], [-1], [0,-1], [0,1,2]])
 @pytest.mark.parametrize("quantize_backprop", [False, True])
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
 def test_simd_reduce(f1, f2, dim, quantize_backprop,
@@ -154,12 +154,18 @@ def test_simd_reduce(f1, f2, dim, quantize_backprop,
     x2 = torch.tensor(_x, dtype=torch.float32, device=device,
                       requires_grad=True)
 
-    q1 = f1(x1, dim=dim)
+    if dim is None:
+        q1 = f1(x1)
+    else:
+        q1 = f1(x1, dim=dim)
     loss1 = (q1**2).mean().sqrt()
     loss1.backward()
     torch.cuda.synchronize()
 
-    q2 = f2(x2, dim=dim, mx_specs=mx_specs)
+    if dim is None:
+        q2 = f2(x2, mx_specs=mx_specs)
+    else:
+        q2 = f2(x2, dim=dim, mx_specs=mx_specs)
     loss2 = (q2**2).mean().sqrt()
     loss2.backward()
     torch.cuda.synchronize()

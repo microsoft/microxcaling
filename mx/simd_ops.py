@@ -505,19 +505,31 @@ def simd_log(in1, mx_specs=None):
     return SIMDLog.apply(in1, mx_specs)
 
 
-def simd_reduce_sum(in1, dim, keepdim=False, mx_specs=None):
+def simd_reduce_sum(in1, dim=None, keepdim=False, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch_sum(in1, dim, keepdim=keepdim)
+        if dim is None:
+            return torch_sum(in1)
+        else:
+            return torch_sum(in1, dim, keepdim=keepdim)
+
+    if dim is None:
+        dim = list(range(in1.ndim))
 
     mx_specs = apply_mx_specs(mx_specs)
     return SIMDReduceSum.apply(in1, dim, keepdim, mx_specs)
 
 
-def simd_reduce_mean(in1, dim, keepdim=False, mx_specs=None):
+def simd_reduce_mean(in1, dim=None, keepdim=False, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
-        return torch_mean(in1, dim, keepdim=keepdim)
+        if dim is None:
+            return torch_sum(in1)
+        else:
+            return torch_mean(in1, dim, keepdim=keepdim)
+
+    if dim is None:
+        dim = list(range(in1.ndim))
 
     mx_specs = apply_mx_specs(mx_specs)
 
