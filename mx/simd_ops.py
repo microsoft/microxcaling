@@ -524,7 +524,7 @@ def simd_reduce_mean(in1, dim=None, keepdim=False, mx_specs=None):
     mx_assert_test(mx_specs)
     if mx_specs is None:
         if dim is None:
-            return torch_sum(in1)
+            return torch_mean(in1)
         else:
             return torch_mean(in1, dim, keepdim=keepdim)
 
