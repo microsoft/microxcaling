@@ -1,16 +1,14 @@
-/*
- * Microsoft Confidential
- */
-
 #ifndef PYT_MX_COMMON_CUH
 #define PYT_MX_COMMON_CUH
 
 #include <stdio.h>
 #include <algorithm>
 #include <cuda.h>
+#include <cuda_bf16.h>
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
 #include <cooperative_groups.h>
+#include <limits.h>
 
 // Max threads per block for CUDA compute capability 2.x - 7.5 is 1024
 // Max threads for some CUDA random number generators is 256
@@ -164,29 +162,67 @@ int get_biased_exponent(
     return get_biased_exponent(u);
 }
 
-// get_unbiased_exponent supports denorms
 __host__ __device__ __forceinline__
-int get_unbiased_exponent(
-    const float input
+int get_biased_exponent(
+    const at::BFloat16 input
 ) {
     u_float_int u;
-    u.f = input;
-    int exp = get_biased_exponent(u);
-    if (exp == 0) {
-        // Denorm
-        return 1 - FLOAT32_EXP_BIAS;
-    } else {
-        return exp - FLOAT32_EXP_BIAS;
-    }
+    u.f = (float)(input);
+    return get_biased_exponent(u);
 }
 
 __host__ __device__ __forceinline__
 int get_biased_exponent(
-    const __half input
+    const at::Half input
 ) {
     u_float_int u;
-    u.f = __half2float(input);
+    u.f = (float)(input);
     return get_biased_exponent(u);
+}
+
+__host__ __device__ __forceinline__
+float as_float(const float input) {
+    return input;
+}
+
+__host__ __device__ __forceinline__
+float as_float(const at::BFloat16 input) {
+    return (float)(input);
+}
+
+__host__ __device__ __forceinline__
+float as_float(const at::Half input) {
+    return (float)(input);
+}
+
+// get the maximum non-nan exponent for a given type
+__host__ __device__ __forceinline__
+int get_max_exp(float _) {
+    return FLOAT32_EXP_MAX - 1;
+}
+
+__host__ __device__ __forceinline__
+int get_max_exp(at::BFloat16 _) {
+    return FLOAT32_EXP_MAX - 1;
+}
+
+__host__ __device__ __forceinline__
+int get_max_exp(at::Half _) {
+    return FLOAT16_MAX_EXP - 1;
+}
+
+// get_unbiased_exponent supports denorms
+template<typename T>
+__host__ __device__ __forceinline__
+int get_unbiased_exponent(
+    const T input
+) {
+    int exp = get_biased_exponent(input);
+    if (exp == 0) { // Denorm
+        return 1 - FLOAT32_EXP_BIAS;
+    } else {
+        return exp - FLOAT32_EXP_BIAS;
+    }
 }
 
 __host__ __device__ __forceinline__

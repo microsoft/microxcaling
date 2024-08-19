@@ -47,7 +47,7 @@ Usage Notes:
     ```
 """
 
-import os
+import os, torch
 import collections
 import argparse
 import json
@@ -84,6 +84,7 @@ class MxSpecs(collections.UserDict):
             "w_elem_format": None,
             "a_elem_format": None,
             "w_elem_format_bp": None,
+            "a_elem_format_bp": None,
             "a_elem_format_bp_ex": None,
             "a_elem_format_bp_os": None,
             "mx_flush_fp32_subnorms": False,
@@ -124,8 +125,9 @@ class MxSpecs(collections.UserDict):
                              "fp6_e3m2, fp6_e2m3, fp4_e2m1, int8, int4}",
             "a_elem_format": "Activation MX elem format. See w_elem_format",
             "w_elem_format_bp": "Backpass weight MX elem format. See w_elem_format",
-            "a_elem_format_bp_ex": "Backpass act MX elem format. See w_elem_format",
-            "a_elem_format_bp_os": "Backpass act MX elem format. See w_elem_format",
+            "a_elem_format_bp": "Backpass stashed activation MX elem format. See w_elem_format",
+            "a_elem_format_bp_ex": "Backpass act (grad) MX elem format. See w_elem_format",
+            "a_elem_format_bp_os": "Backpass act (grad) MX elem format. See w_elem_format",
             "mx_flush_fp32_subnorms": "MX quantization flushes blocks with "
                                       "subnormal shared scale to zero",
 
@@ -196,6 +198,7 @@ def get_backwards_mx_specs(specs):
         bspecs["w_elem_format"] = None
         bspecs["a_elem_format"] = None
         bspecs["w_elem_format_bp"] = None
+        bspecs["a_elem_format_bp"] = None
         bspecs["a_elem_format_bp_os"] = None
         bspecs["a_elem_format_bp_ex"] = None
         bspecs["block_size"] = 0
@@ -283,6 +286,7 @@ def finalize_mx_specs(specs, early_exit=True):
         not specs.get("w_elem_format", 0) 
         and not specs.get("a_elem_format", 0)
         and not specs.get("w_elem_format_bp", 0)
+        and not specs.get("a_elem_format_bp", 0)
         and not specs.get("a_elem_format_bp_os", 0)
         and not specs.get("a_elem_format_bp_ex", 0)
         and not specs.get("bfloat", 0)
@@ -290,6 +294,9 @@ def finalize_mx_specs(specs, early_exit=True):
         and early_exit
     ):
         return None
+    
+    if specs.get('custom_cuda'):
+        assert torch.cuda.is_available(), f"'custom_cuda' is only supported on CUDA devices."
 
     # Handle specs wihch depend on another base spec
     def assign_if_none(f1, f2):
@@ -297,6 +304,7 @@ def finalize_mx_specs(specs, early_exit=True):
             specs[f1] = specs[f2]
 
     assign_if_none("w_elem_format_bp", "w_elem_format")
+    assign_if_none("a_elem_format_bp", "a_elem_format")
     assign_if_none("a_elem_format_bp_os", "a_elem_format")
     assign_if_none("a_elem_format_bp_ex", "a_elem_format")
 

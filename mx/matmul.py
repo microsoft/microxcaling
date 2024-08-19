@@ -10,6 +10,7 @@ from .mx_ops import quantize_mx_op
 from .elemwise_ops import quantize_elemwise_op
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
+from .matmul_precision import set_matmul_precision
 
 torch_matmul = torch.matmul
 torch_addmm = torch.addmm
@@ -79,7 +80,11 @@ class MatMulFunction(torch.autograd.Function):
             round=mx_specs["round_mx_output"],
         )
 
-        out = torch_matmul(qin1, qin2)
+        with set_matmul_precision(qin1, qin2,
+                        qin1_elem_format,
+                        qin2_elem_format):
+            out = torch_matmul(qin1, qin2)
+        
         out = quantize_elemwise_op(
             out, mx_specs=mx_specs, round=mx_specs["round_output"]
         )
@@ -103,12 +108,12 @@ class MatMulFunction(torch.autograd.Function):
             BWD act x grad: a x a <-- no mixed precision!
         """
         if ctx.mode_config[0] == "a":
-            qin1_elem_format = ctx.mx_specs["a_elem_format_bp_os"]
+            qin1_elem_format = ctx.mx_specs["a_elem_format_bp"]
         else:
             qin1_elem_format = ctx.mx_specs["w_elem_format_bp"]
 
         if ctx.mode_config[1] == "a":
-            qin2_elem_format = ctx.mx_specs["a_elem_format_bp_os"]
+            qin2_elem_format = ctx.mx_specs["a_elem_format_bp"]
         else:
             qin2_elem_format = ctx.mx_specs["w_elem_format_bp"]
 
@@ -156,8 +161,15 @@ class MatMulFunction(torch.autograd.Function):
         )
 
         # compute grad_in1 and grad_in2
-        grad_in1 = torch_matmul(qgrad_out1, qin2.transpose(-1, -2))
-        grad_in2 = torch_matmul(qin1.transpose(-1, -2), qgrad_out2)
+        with set_matmul_precision(qgrad_out1, qin2,
+            ctx.mx_specs["a_elem_format_bp_os"],
+            qin2_elem_format):
+            grad_in1 = torch_matmul(qgrad_out1, qin2.transpose(-1, -2))
+        
+        with set_matmul_precision(qin1, qgrad_out2,
+            qin1_elem_format,
+            ctx.mx_specs["a_elem_format_bp_os"]):
+            grad_in2 = torch_matmul(qin1.transpose(-1, -2), qgrad_out2)
 
         # element-wise quantize for grad_in1 and grad_in2
         grad_in1 = quantize_elemwise_op(

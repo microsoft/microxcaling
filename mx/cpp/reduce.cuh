@@ -1,7 +1,3 @@
-/*
- * Microsoft Confidential
- */
-
 #ifndef PYT_MX_REDUCE_CUH
 #define PYT_MX_REDUCE_CUH
 

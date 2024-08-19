@@ -145,7 +145,7 @@ def test_mm(bias, mx_none, shape, quantize_backprop, device):
     loss2.backward()
     torch.cuda.synchronize()
 
-    check_diff(q1, q2, tol=1e-6)
+    check_diff(q1, q2, tol=1e-5)
     check_diff(m1.grad, m2.grad, tol=1e-5)
     check_diff(w1.grad, w2.grad, tol=1e-5)
     if bias:

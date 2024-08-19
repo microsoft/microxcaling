@@ -1,9 +1,10 @@
-/*
- * Microsoft Confidential
- */
-
 #ifndef PYT_MX_QUANTIZE_CUH
 #define PYT_MX_QUANTIZE_CUH
+
+#include "common.cuh"
+#include "curand_kernel.h"
+#include "assert.h"
+#include <limits.h>
 
 //---------------------------------------------------------
 // Shift right and round a float32 mantissa
@@ -94,6 +95,9 @@ float quantize_elemwise(
     bool saturate_normals = false,
     bool allow_denorm = true
 ) {
+    float output;
+    if (input == 0.0f){return 0.0f;} 
+
     u_float_int input_;
     input_.f = input;
     int biased_exp = get_biased_exponent(input_);
@@ -121,8 +125,10 @@ float quantize_elemwise(
 
     // Shift down and round mantissa, allow overflow except for integers
     // This converts tmant into a full mantissa
+    bool is_subnormal = (biased_exp == 0) ;
+
     shift_right_round_mantissa(
-          tmant, biased_exp==0, mbits, exp_diff, rounding_mode, !is_int);
+          tmant, is_subnormal, mbits, exp_diff, rounding_mode, !is_int);
 
     if (tmant == 0) {
         return 0.0;
@@ -131,11 +137,11 @@ float quantize_elemwise(
     // Shift back up to restore mantissa
     // This converts back to a trailing mantissa
     const bool overflow = shift_left_mantissa(
-          tmant, biased_exp==0, mbits, exp_diff);
+          tmant, is_subnormal, mbits, exp_diff);
     biased_exp = overflow ? biased_exp+1 : biased_exp;
 
     // Reconstruct float number
-    float output = construct_float(sign, biased_exp, tmant);
+    output = construct_float(sign, biased_exp, tmant);
 
     // Return Inf if rounded value is out of bounds,
     // unless target format is integer or saturate_normals==True
@@ -148,24 +154,26 @@ float quantize_elemwise(
     return output;
 }
 
-//-----------------------------------------------------------------------
-// Half-precision
-//-----------------------------------------------------------------------
+//---------------------------------------------------------
+// Quantize a float32 to MX format, given a shared exp
+//---------------------------------------------------------
 __host__ __device__ __forceinline__
-__half quantize_elemwise(
-    __half input,
-    int bits,
-    int exp_bits,
-    float max_norm,
-    const RoundingMode rounding_mode = rd_away,
-    bool saturate_normals = false,
-    bool allow_denorm = true
+float quantize_mx_elem(
+    const float input,
+    const float scale,
+    const bool flush_tile,
+    const int elem_ebits,
+    const int elem_mbits,
+    const float elem_max_norm,
+    const RoundingMode rounding_mode = rd_away
 ) {
-    float in_fp32 = __half2float(input);
-    float out_fp32 = quantize_elemwise(in_fp32, bits, exp_bits, max_norm,
-                                       rounding_mode, saturate_normals,
-                                       allow_denorm);
-    return __float2half(out_fp32);
+    const float scaled_in = (flush_tile) ? 0 : input / scale;
+
+    const float scaled_out = quantize_elemwise(
+            scaled_in, elem_mbits, elem_ebits, elem_max_norm,
+            rounding_mode, true, true);
+
+    return scaled_out * scale;
 }
 
 #endif

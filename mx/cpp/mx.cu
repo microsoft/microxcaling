@@ -47,10 +47,14 @@ torch::Tensor quantize_mx_cuda(
     const long blocks = get_blocks(total_size);
     const int threads = get_threads(total_size);
 
+    // Check if number of blocks or number of threads is zero
+    if (blocks == 0 || threads == 0) {
+        output.copy_(input);
+        return output;
+    }
+
     // Call CUDA kernel
-    if (input.dtype() == torch::ScalarType::Half) {
-        AT_ASSERTM(0, " fp16 not supported for MX");
-    } else {
+    if (input.dtype() == torch::ScalarType::Float) {
         quantize_mx_cuda_kernel<<<blocks, threads>>>(
             input.data_ptr<float>(),
             scale_bits,
@@ -65,6 +69,41 @@ torch::Tensor quantize_mx_cuda(
             rounding_mode,
             output.data_ptr<float>()
         );
+    }
+    else if (input.dtype() == torch::ScalarType::Half) {
+        quantize_mx_cuda_kernel<<<blocks, threads>>>(
+            input.data_ptr<at::Half>(),
+            scale_bits,
+            elem_ebits,
+            elem_mbits,
+            elem_max_norm,
+            max_values.data_ptr<at::Half>(),
+            total_size,
+            axis_size,
+            post_axis_size,
+            flush_fp32_subnorms,
+            rounding_mode,
+            output.data_ptr<at::Half>()
+        );
+    }
+    else if (input.dtype() == torch::ScalarType::BFloat16) {
+        quantize_mx_cuda_kernel<<<blocks, threads>>>(
+            input.data_ptr<at::BFloat16>(),
+            scale_bits,
+            elem_ebits,
+            elem_mbits,
+            elem_max_norm,
+            max_values.data_ptr<at::BFloat16>(),
+            total_size,
+            axis_size,
+            post_axis_size,
+            flush_fp32_subnorms,
+            rounding_mode,
+            output.data_ptr<at::BFloat16>()
+        );
+    }
+    else {
+        AT_ASSERTM(0, " Tensor dtype not supported");
     }
 
     gpuErrchk(cudaPeekAtLastError());
@@ -121,9 +160,13 @@ torch::Tensor quantize_mx_by_tile_cuda(
         const long blocks = get_blocks(total_size);
         const int threads = get_threads(total_size);
 
-        if (input.dtype() == torch::ScalarType::Half) {
-            AT_ASSERTM(0, " fp16 not supported for MX");
-        } else {
+        // Check if number of blocks or number of threads is zero
+        if (blocks == 0 || threads == 0) {
+            output.copy_(input);
+            return output;
+        }
+
+        if (input.dtype() == torch::ScalarType::Float) {
             quantize_mx_innermost_cuda_kernel<<<blocks, threads>>>(
                 input.data_ptr<float>(),
                 scale_bits,
@@ -137,6 +180,37 @@ torch::Tensor quantize_mx_by_tile_cuda(
                 output.data_ptr<float>()
             );
         }
+        else if (input.dtype() == torch::ScalarType::Half) {
+            quantize_mx_innermost_cuda_kernel<<<blocks, threads>>>(
+                input.data_ptr<at::Half>(),
+                scale_bits,
+                elem_ebits,
+                elem_mbits,
+                elem_max_norm,
+                total_size,
+                tsize,
+                flush_fp32_subnorms,
+                rounding_mode,
+                output.data_ptr<at::Half>()
+            );
+        }
+        else if (input.dtype() == torch::ScalarType::BFloat16) {
+            quantize_mx_innermost_cuda_kernel<<<blocks, threads>>>(
+                input.data_ptr<at::BFloat16>(),
+                scale_bits,
+                elem_ebits,
+                elem_mbits,
+                elem_max_norm,
+                total_size,
+                tsize,
+                flush_fp32_subnorms,
+                rounding_mode,
+                output.data_ptr<at::BFloat16>()
+            );
+        }
+        else {
+            AT_ASSERTM(0, " Tensor dtype not supported");
+        }
     }
     // Otherwise call quantize_mx_by_tile
     else {
@@ -145,10 +219,14 @@ torch::Tensor quantize_mx_by_tile_cuda(
         const long blocks = get_blocks(total_tiles);
         const int threads = get_threads(total_tiles);
 
+        // Check if number of blocks or number of threads is zero
+        if (blocks == 0 || threads == 0) {
+            output.copy_(input);
+            return output;
+        }
+
         // Call CUDA kernel
-        if (input.dtype() == torch::ScalarType::Half) {
-            AT_ASSERTM(0, " fp16 not supported for MX");
-        } else {
+        if (input.dtype() == torch::ScalarType::Float) {
             quantize_mx_by_tile_cuda_kernel<<<blocks, threads>>>(
                 input.data_ptr<float>(),
                 scale_bits,
@@ -164,6 +242,43 @@ torch::Tensor quantize_mx_by_tile_cuda(
                 rounding_mode,
                 output.data_ptr<float>()
             );
+        }
+        else if (input.dtype() == torch::ScalarType::Half) {
+            quantize_mx_by_tile_cuda_kernel<<<blocks, threads>>>(
+                input.data_ptr<at::Half>(),
+                scale_bits,
+                elem_ebits,
+                elem_mbits,
+                elem_max_norm,
+                total_tiles,
+                tsize,
+                num_tiles,
+                axis_size,
+                post_axis_size,
+                flush_fp32_subnorms,
+                rounding_mode,
+                output.data_ptr<at::Half>()
+            );
+        }
+        else if (input.dtype() == torch::ScalarType::BFloat16) {
+            quantize_mx_by_tile_cuda_kernel<<<blocks, threads>>>(
+                input.data_ptr<at::BFloat16>(),
+                scale_bits,
+                elem_ebits,
+                elem_mbits,
+                elem_max_norm,
+                total_tiles,
+                tsize,
+                num_tiles,
+                axis_size,
+                post_axis_size,
+                flush_fp32_subnorms,
+                rounding_mode,
+                output.data_ptr<at::BFloat16>()
+            );
+        }
+        else {
+            AT_ASSERTM(0, " Tensor dtype not supported");
         }
     }
 

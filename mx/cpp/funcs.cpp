@@ -1,6 +1,4 @@
 /*
- * Microsoft Confidential
- *
  * funcs.cpp
  *
  * This file provides various C++ implementations and torch interface
@@ -17,7 +15,6 @@
 #include "funcs.h"
 #include "common.cuh"
 #include "shared_exp.cuh"
-#include "quantize.cuh"
 
 
 //-----------------------------------------------------------------------
@@ -44,11 +41,6 @@ torch::Tensor quantize_mx_func_cpp(
     // Output
     auto B = torch::empty_like(A);
 
-    // Get data pointers
-    auto max_value_data = max_values.data_ptr<float>();
-    auto A_data = A.data_ptr<float>();
-    auto B_data = B.data_ptr<float>();
-
     // Size of shared axis
     auto A_sizes = A.sizes();
     const int axis_size = A_sizes[axis];
@@ -63,36 +55,63 @@ torch::Tensor quantize_mx_func_cpp(
         post_axis_size *= A_sizes[i];
     }
 
-    // Loop over dimension before shared axis
-    for (int i = 0; i < pre_axis_size; i++) {
-        // Loop over dimension after shared axis
-        for (int j = 0; j < post_axis_size; j++) {
-            // Get shared exponent
-            const long m_i = i * post_axis_size + j;
-            int shared_exp = (int) get_biased_exponent(max_value_data[m_i]);
-            bool flush_tile = (shared_exp == 0 && flush_fp32_subnorms);
-
-            // Compute the shared scale
-            const float scale = mx_get_shared_scale(
-                  shared_exp, scale_bits, elem_max_norm);
-
-            // Loop over axis
-            for (int k = 0; k < axis_size; k++) {
-                int A_i = i * post_axis_size * axis_size +
-                          k * post_axis_size + j;
-
-                float scaled_in = (flush_tile) ? 0 : A_data[A_i] / scale;
-
-                float scaled_out = quantize_elemwise(
-                        scaled_in, elem_mbits, elem_ebits, elem_max_norm,
-                        rounding_mode, true, true);
-
-                B_data[A_i] = scaled_out * scale;
-            }
-        }
+    if (A.dtype() == torch::ScalarType::Float) {
+        quantize_mx_cpp(
+            A.data_ptr<float>(),
+            scale_bits,
+            elem_ebits, elem_mbits, elem_max_norm,
+            max_values.data_ptr<float>(),
+            axis_size, pre_axis_size, post_axis_size,
+            flush_fp32_subnorms,
+            rounding_mode,
+            B.data_ptr<float>()
+        );
     }
-
+    else if (A.dtype() == torch::ScalarType::Half) {
+        quantize_mx_cpp(
+            A.data_ptr<at::Half>(),
+            scale_bits,
+            elem_ebits, elem_mbits, elem_max_norm,
+            max_values.data_ptr<at::Half>(),
+            axis_size, pre_axis_size, post_axis_size,
+            flush_fp32_subnorms,
+            rounding_mode,
+            B.data_ptr<at::Half>()
+        );
+    }
+    else if (A.dtype() == torch::ScalarType::BFloat16) {
+        quantize_mx_cpp(
+            A.data_ptr<at::BFloat16>(),
+            scale_bits,
+            elem_ebits, elem_mbits, elem_max_norm,
+            max_values.data_ptr<at::BFloat16>(),
+            axis_size, pre_axis_size, post_axis_size,
+            flush_fp32_subnorms,
+            rounding_mode,
+            B.data_ptr<at::BFloat16>()
+        );
+    }
+    else {
+        AT_ASSERTM(0, " Tensor dtype not supported");
+    }
     return B;
+}
+
+template <typename T>
+void quantize_tensor(const torch::Tensor& input, torch::Tensor& output,
+                     int bits, int exp_bits, float max_norm,
+                     int rmode, bool saturate_normals,
+                     bool allow_denorm) {
+    auto i_data = input.data_ptr<T>();
+    auto o_data = output.data_ptr<T>();
+    long get_total_size = input.numel();  
+    // Explicitly cast int to enum
+    RoundingMode rounding_mode = static_cast<RoundingMode>(rmode);
+    for (long i = 0; i < get_total_size; i++) {
+        o_data[i] = quantize_elemwise(
+            i_data[i], bits, exp_bits, max_norm,
+            rounding_mode, saturate_normals, allow_denorm);
+    }
 }
 
 torch::Tensor quantize_elemwise_func_cpp(
@@ -104,29 +123,26 @@ torch::Tensor quantize_elemwise_func_cpp(
     const bool saturate_normals = false,
     const bool allow_denorm = true
 ) {
-    // Explicitly cast int to enum
-    RoundingMode rounding_mode = static_cast<RoundingMode>(rmode);
-
     // Calculate total size of the input
     const int ndim = input.dim();
     const auto input_sizes = input.sizes();
-    long total_size = 1;
-    for (int i = 0; i < ndim; i++) {
-        total_size *= input_sizes[i];
-    }
 
     // Output
     auto output = torch::empty_like(input);
 
-    // Get data pointers
-    auto i_data = input.data_ptr<float>();
-    auto o_data = output.data_ptr<float>();
-
-    // Loop over dimension before shared axis
-    for (long i = 0; i < total_size; i++) {
-        o_data[i] = quantize_elemwise(
-            i_data[i], bits, exp_bits, max_norm,
-            rounding_mode, saturate_normals, allow_denorm);
+    // Example usage:
+    if (input.dtype() == torch::ScalarType::Float) {
+        quantize_tensor<float>(input, output, bits, exp_bits, max_norm,
+                            rmode, saturate_normals, allow_denorm);
+    } else if (input.dtype() == torch::ScalarType::Half) {
+        quantize_tensor<at::Half>(input, output, bits, exp_bits, max_norm,
+                                rmode, saturate_normals, allow_denorm);
+    } else if (input.dtype() == torch::ScalarType::BFloat16) {
+        quantize_tensor<at::BFloat16>(input, output, bits, exp_bits, max_norm,
+                                    rmode, saturate_normals, allow_denorm);
+    }
+    else {
+        AT_ASSERTM(0, " Tensor dtype not supported");
     }
 
     return output;

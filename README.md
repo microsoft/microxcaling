@@ -5,7 +5,7 @@
 This library provides the capability to emulate MX-compatble formats
 and bfloat quantization in pytorch, enabling data science exploration
 for DNNs with different MX formats.
-The underlying computations are done in float32 but with values restricted to
+The underlying computations are done in float32/bfloat16/fp16 but with values restricted to
 the representable range of MX-compatible or bfloat data formats.
 
 At high level, the following operations are supported:
@@ -23,6 +23,8 @@ basic MX/bfloat quantization. The custom CUDA code is faster, and in the case of
 MX more numerically accurate than pytorch GPU. See [Pytorch CUDA Bugs](#Pytorch-CUDA-Bugs).
 
 ## Requirements ##
+We recommend using [Nvidia-PyTorch Container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
+
 CUDA is required (11.3+ recommended).
 For Python packages see ```requirements.txt```.
 
@@ -38,9 +40,10 @@ logos are subject to those third-party’s policies.
 There are two ways to integrate the library into your PyTorch models.
 1. Manually replace each PyTorch module (```torch.nn.*```) and PyTorch function (```torch.nn.function.*```)
    with its equivalent mx library module/function in the model code.
-   This is time-consuming and error-prone, but gives users control.
+   This is time-consuming and error-prone, but gives users more precise control over quantization.
 2. Use ```mx_mapping.inject_pyt_ops``` to replace PyTorch modules/functions in
    the global python scope, then build your model.
+3. See [MX Option Parsing](#MX-Option-Parsing) to setup argument parsing.
 
 The repo contains a PDF guide for manual integration.
 The ```examples``` folders also contains working code samples.
@@ -50,30 +53,30 @@ The ```examples``` folders also contains working code samples.
 
 ## Files ##
 #### Configuration ####
- * specs.py: configurable settings for MX and bfloat quantization, functions
+ * ```specs.py```: configurable settings for MX and bfloat quantization, functions
    to help parse these settings with ArgParse.
 
 #### Basic Operators ####
- * mx\_ops.py: functions to convert Pytorch Tensors to an MX-compatible data format
- * elemwise\_ops.py: functions to convert Pytorch Tensors to a bfloat (or fp) data format
- * vector\_ops.py: vector ops (e.g., +, -, exp, sqrt) at bfloat (or fp) precision
+ * ```mx_ops.py```: functions to convert Pytorch Tensors to an MX-compatible data format
+ * ```elemwise_ops.py```: functions to convert Pytorch Tensors to a bfloat (or fp) data format
+ * ```vector_ops.py```: vector ops (e.g., +, -, exp, sqrt) at bfloat (or fp) precision
 
 #### Linear Functions and Layers ####
- * linear.py: MX drop-in replacements for Pytorch Linear/linear
- * matmul.py: MX drop-in replacement for Pytorch matmul
- * bmm.py: MX drop-in replacement for torch bmm
+ * ```linear.py```: MX drop-in replacements for Pytorch Linear/linear
+ * ```matmul.py```: MX drop-in replacement for Pytorch matmul
+ * ```bmm.py```: MX drop-in replacement for torch bmm
 
 #### Elementwise Functions and Layers ####
- * activations.py: bfloat drop-in replacements for Pytorch relu, gelu, sigmoid
- * layernorm.py: bfloat drop-in replacements for Pytorch LayerNorm, RMSNorm
- * softmax.py: bfloat drop-in replacements for Pytorch Softmax/softmax
+ * ```activations.py```: bfloat drop-in replacements for Pytorch relu, gelu, sigmoid
+ * ```layernorm.py```: bfloat drop-in replacements for Pytorch LayerNorm, RMSNorm
+ * ```softmax.py```: bfloat drop-in replacements for Pytorch Softmax/softmax
 
 #### Custom CUDA Extension ####
- * custom\_extensions.py: Pytorch extension, interfaces with the C++/CUDA code
- * cpp/funcs.cpp: defines which C++/CUDA functions are exposed to pytorch
- * cpp/common.cuh: functions to quantize a single float value to MX or bfloat/fp
- * cpp/quantize.cu: functions to quantize a Pytorch tensor to MX or bfloat/fp
- * cpp/reduce.cu: functions to compute a sum/max reduction over one axis of a Pytorch tensor
+ * ```custom_extensions.py```: Pytorch extension, interfaces with the C++/CUDA code
+ * ```cpp/funcs.cpp```: defines which C++/CUDA functions are exposed to pytorch
+ * ```cpp/common.cuh```: functions to quantize a single float value to MX or bfloat/fp
+ * ```cpp/quantize.cu```: functions to quantize a Pytorch tensor to MX or bfloat/fp
+ * ```cpp/reduce.cu```: functions to compute a sum/max reduction over one axis of a Pytorch tensor
 
 ## Spec Configuration ##
 Operators, functions, and layers provided by this library all take ```mx_specs```
@@ -101,6 +104,10 @@ Please see [W and A bits](#W-and-a-bits).
 In the linear layers (linear, matmul, bmm), linear assumes its two inputs
 are activaitons and weight. However, matmul and bmm assume both inputs
 are activations. Please see [W and A](#W-and-a).
+
+![Image](./images/rounding_and_quantizing_optns_linear.png)
+![Image](./images/rounding_and_quantizing_optns_matmul.png)
+![Image](./images/rounding_and_quantizing_optns_bmm.png)
 
 The next set of options configure bfloat and fp data format. They apply to
 non-matrix operations like add, mul, sqrt, and exp. Layers such as
@@ -134,7 +141,7 @@ The examples below show how to create the mx_specs dictionary and configure it f
 each concrete MX-compatible format. For simplicity we ignore the backward pass
 specs like w\_elem\_format\_bp.
 ```
-# MXFP8\_e5m2 matmuls with bfloat16 vector ops, forward pass only
+# MXFP8_e5m2 matmuls with bfloat16 vector ops, forward pass only
 mx_specs = MxSpecs()
 
 mx_specs[‘scale_bits’] = 8
@@ -145,7 +152,7 @@ mx_specs[‘bfloat’] = 16
 mx_specs[‘custom_cuda’] = True
 ```
 ```
-# MXFP4\_e2m1 matmuls with bfloat16 vector ops, forward pass only
+# MXFP4_e2m1 matmuls with bfloat16 vector ops, forward pass only
 mx_specs = MxSpecs()
 
 mx_specs[‘scale_bits’] = 8
@@ -195,7 +202,7 @@ mx_specs = get_mx_specs(args)
 ```
 
 If not set explicitly in the arguments, the backward pass MX formats
-(```w_elem_format_bp```, ```a_elem_format_bp_ex```, ```a_elem_format_bp_os```)
+(```w_elem_format_bp```, ```a_elem_format_bp```, ```a_elem_format_bp_ex```, ```a_elem_format_bp_os```)
 will be assigned the values of ```w_elem_format``` and ```a_elem_format```.
 
 Boolean flags that are by default **True** will be added to ArgumentParser
@@ -209,8 +216,9 @@ There is a unit test suite provided with this library under the
 ```python -m pytest .```. The pytest pip package is required.
 
 The unit tests have been tested to pass on these configurations:
- * pytorch-1.13.0 + cuda11.6 + Nvidia V100
- * pytorch-2.1.0 + cuda12.1 + Nvidia V100
+ * pytorch-2.4.0 + cuda12.5 + Nvidia V100
+ * pytorch-2.4.0 + cuda12.5 + Nvidia A100
+ * pytorch-2.4.0 + cuda12.5 + Nvidia H100
 
 ## Numerics ##
 ### Pytorch CUDA Inaccuracies ###
@@ -273,13 +281,15 @@ as "block_size" already has a different meaning in CUDA:
  * "block_size" -> "tile_size"
 
 The CUDA code was compiled and tested on a machine with the following:
-* Ubuntu 18.04
-* Nvidia Tesla V100
-* Nvidia driver 530.30.02
-* CUDA 12.1
-* libcudnn7\_7.6.4.38
-* Python 3.9.12
-* PyTorch 1.12.1+cu113
+| Information       | Nvidia V100                | Nvidia A100                | Nvidia H100                |
+|-------------------|:--------------------------:|:--------------------------:|:--------------------------:|
+| Container Image   | nvcr.io/nvidia/pytorch:24.06-py3 | nvcr.io/nvidia/pytorch:24.06-py3 | nvcr.io/nvidia/pytorch:24.06-py3 |
+| OS                | Ubuntu 20.04               | Ubuntu 22.04               | Ubuntu 22.04               |
+| Nvidia Driver     | 535.171.04                 | 535.183.01                 | 550.54.15                  |
+| CUDA              | 12.5                       | 12.5                       | 12.5                       |
+| cuDNN             | 9.1.0.70                   | 9.1.0.70                   | 9.1.0.70                   |
+| Python            | 3.10.12                    | 3.10.12                    | 3.10.12                    |
+| PyTorch           | 2.4.0                      | 2.4.0                      | 2.4.0                      |
 
 ## Contributing
 

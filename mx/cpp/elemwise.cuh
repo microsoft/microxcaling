@@ -1,9 +1,6 @@
-/*
- * Microsoft Confidential
- */
-
 #ifndef PYT_MX_ELEMWISE_CUH
 #define PYT_MX_ELEMWISE_CUH
+
 
 #include "common.cuh"
 #include "quantize.cuh"
@@ -30,8 +27,8 @@ __global__ void quantize_elemwise_cuda_kernel(
     #pragma unroll
     for (int i = 0; i < ELEMWISE_ROWS_PER_THREAD; ++i) {
         if (offset >= total_size) return;
-        output[offset] = quantize_elemwise(
-            input[offset], bits, exp_bits, max_norm,
+        output[offset] = (T)quantize_elemwise(
+            as_float(input[offset]), bits, exp_bits, max_norm,
             rounding_mode, saturate_normals, allow_denorm);
         offset += ELEMWISE_ROW_SIZE;
     }

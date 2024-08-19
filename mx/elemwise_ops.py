@@ -17,9 +17,7 @@ Exposed Methods:
     quantize_elemwise_op - quantizes a tensor to bfloat or other
                            custom float format
 """
-import os
 import torch
-import numpy as np
 
 from .formats import RoundingMode, _get_format_params
 from .formats import _get_min_norm, _get_max_norm
@@ -246,6 +244,11 @@ def quantize_elemwise_op(A, mx_specs, round=None):
         return A
     elif round is None:
         round = mx_specs['round']
+
+    if mx_specs['bfloat'] == 16 and round == 'even'\
+        and torch.cuda.is_bf16_supported() \
+        and mx_specs['bfloat_subnorms'] == True:
+        return A.to(torch.bfloat16)
 
     if mx_specs['bfloat'] > 0 and mx_specs['fp'] > 0:
         raise ValueError("Cannot set both [bfloat] and [fp] in mx_specs.")

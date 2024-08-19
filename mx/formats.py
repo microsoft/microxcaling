@@ -3,9 +3,6 @@ Copyright (c) Microsoft Corporation.
 Licensed under the MIT License.
 """
 
-import torch
-import numpy as np
-import re
 from enum import Enum, IntEnum
 
 FP32_EXPONENT_BIAS = 127

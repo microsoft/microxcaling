@@ -135,6 +135,7 @@ def test_none1(f1, f2, nargs):
     loss2.backward()
     torch.cuda.synchronize()
 
+    print(f'{f1=} {f2=} {nargs=}')
     check_diff(q1, q2, tol=0)
     check_diff(x1.grad, x2.grad, tol=0)
     if nargs == 2:

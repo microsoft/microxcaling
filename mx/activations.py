@@ -4,8 +4,6 @@ Licensed under the MIT License.
 """
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 from .vector_ops import *
 from .specs import apply_mx_specs, get_backwards_mx_specs

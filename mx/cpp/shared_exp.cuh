@@ -1,7 +1,3 @@
-/*
- * Microsoft Confidential
- */
-
 #ifndef PYT_MX_SHARED_EXP_CUH
 #define PYT_MX_SHARED_EXP_CUH
 
