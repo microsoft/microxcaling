@@ -39,24 +39,14 @@ torch::Tensor quantize_elemwise_cuda(
         blocks += 1;
     const int threads = ELEMWISE_ROW_SIZE;
 
+    // Check if number of blocks or number of threads is zero
+    if (blocks == 0 || threads == 0) {
+        output.copy_(input);
+        return output;
+    }
+
     // Call CUDA kernel
-    if (input.dtype() == torch::ScalarType::Half) {
-        #if (__CUDACC_VER_MAJOR__ >= 10 || (__CUDACC_VER_MAJOR__ == 9 && __CUDACC_VER_MINOR__ >= 2))
-        quantize_elemwise_cuda_kernel<<<blocks, threads>>>(
-            (__half*)input.data_ptr<at::Half>(),
-            bits,
-            exp_bits,
-            max_norm,
-            total_size,
-            rounding_mode,
-            saturate_normals,
-            allow_denorm,
-            (__half*)output.data_ptr<at::Half>()
-        );
-        #else
-        AT_ASSERTM(0, " fp16 not supported on this CUDA device");
-        #endif
-    } else {
+    if (input.dtype() == torch::ScalarType::Float) {
         quantize_elemwise_cuda_kernel<<<blocks, threads>>>(
             input.data_ptr<float>(),
             bits,
@@ -68,6 +58,35 @@ torch::Tensor quantize_elemwise_cuda(
             allow_denorm,
             output.data_ptr<float>()
         );
+    }
+    else if (input.dtype() == torch::ScalarType::Half) {
+        quantize_elemwise_cuda_kernel<<<blocks, threads>>>(
+            input.data_ptr<at::Half>(),
+            bits,
+            exp_bits,
+            max_norm,
+            total_size,
+            rounding_mode,
+            saturate_normals,
+            allow_denorm,
+            output.data_ptr<at::Half>()
+        );
+    } 
+    else if (input.dtype() == torch::ScalarType::BFloat16) {
+        quantize_elemwise_cuda_kernel<<<blocks, threads>>>(
+            input.data_ptr<at::BFloat16>(),
+            bits,
+            exp_bits,
+            max_norm,
+            total_size,
+            rounding_mode,
+            saturate_normals,
+            allow_denorm,
+            output.data_ptr<at::BFloat16>()
+        );
+    }
+    else {
+        AT_ASSERTM(0, " Tensor dtype not supported");
     }
 
     gpuErrchk(cudaPeekAtLastError());

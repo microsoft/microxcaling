@@ -9,6 +9,7 @@ from .mx_ops import quantize_mx_op
 from .elemwise_ops import quantize_elemwise_op
 from .specs import apply_mx_specs, get_backwards_mx_specs
 from .specs import mx_assert_test
+from .matmul_precision import set_matmul_precision
 
 
 torch_bmm = torch.bmm
@@ -52,7 +53,10 @@ class BMMFunction(torch.autograd.Function):
         )
 
         # compute output
-        out = torch_bmm(qin1, qin2)
+        with set_matmul_precision(qin1, qin2,
+                    mx_specs['a_elem_format'],
+                    mx_specs['a_elem_format']):
+            out = torch_bmm(qin1, qin2)
 
         # element-wise quantize for output
         out = quantize_elemwise_op(
@@ -78,14 +82,14 @@ class BMMFunction(torch.autograd.Function):
         qin1 = quantize_mx_op(
             in1,
             ctx.mx_specs,
-            elem_format=ctx.mx_specs["a_elem_format_bp_os"],
+            elem_format=ctx.mx_specs["a_elem_format_bp"],
             axes=[-2],
             round=ctx.mx_specs["round_mx_input_grad_input"],
         )
         qin2 = quantize_mx_op(
             in2,
             ctx.mx_specs,
-            elem_format=ctx.mx_specs["a_elem_format_bp_os"],
+            elem_format=ctx.mx_specs["a_elem_format_bp"],
             axes=[-1],
             round=ctx.mx_specs["round_mx_input_grad_input"],
         )
@@ -106,8 +110,15 @@ class BMMFunction(torch.autograd.Function):
         )
 
         # compute grad_in1 and grad_in2
-        grad_in1 = torch_bmm(qgrad_out1, qin2.transpose(-1, -2))
-        grad_in2 = torch_bmm(qin1.transpose(-1, -2), qgrad_out2)
+        with set_matmul_precision(qgrad_out1, qin2,
+                ctx.mx_specs['a_elem_format_bp_os'],
+                ctx.mx_specs['a_elem_format_bp']):
+            grad_in1 = torch_bmm(qgrad_out1, qin2.transpose(-1, -2))
+        
+        with set_matmul_precision(qin1, qgrad_out2,
+                ctx.mx_specs['a_elem_format_bp'],
+                ctx.mx_specs['a_elem_format_bp_os']):
+            grad_in2 = torch_bmm(qin1.transpose(-1, -2), qgrad_out2)
 
         # element-wise quantize for grad_in1 and grad_in2
         grad_in1 = quantize_elemwise_op(

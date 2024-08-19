@@ -1,7 +1,3 @@
-/*
- * Microsoft Confidential
- */
-
 #ifndef PYT_MX_MX_CUH
 #define PYT_MX_MX_CUH
 
@@ -19,7 +15,7 @@ __global__ void quantize_mx_cuda_kernel(
     const int elem_ebits,
     const int elem_mbits,
     const float elem_max_norm,
-    const float* __restrict__ max_values,
+    const T* __restrict__ max_values,
     const long total_size,
     const int axis_size,
     const int post_axis_size,
@@ -36,20 +32,18 @@ __global__ void quantize_mx_cuda_kernel(
 
     // Get shared exponent
     const long m_i = pre_axis_i * post_axis_size + post_axis_i;
-    int shared_exp = (int) get_biased_exponent(max_values[m_i]);
+    const float max_elem = as_float(max_values[m_i]);
+    int shared_exp = (int) get_biased_exponent(max_elem);
     bool flush_tile = (shared_exp == 0 && flush_fp32_subnorms);
 
     // Compute the shared scale
     const float scale = mx_get_shared_scale(
           shared_exp, scale_bits, elem_max_norm);
-
-    T scaled_in = (flush_tile) ? 0 : input[offset] / scale;
-
-    T scaled_out = quantize_elemwise(
-            scaled_in, elem_mbits, elem_ebits, elem_max_norm,
-            rounding_mode, true, true);
-
-    output[offset] = scaled_out * scale;
+    
+    // quantize_mx_elem is overloaded for fp32/bf16
+    output[offset] = quantize_mx_elem(
+        input[offset], scale, flush_tile, elem_ebits, elem_mbits,
+        elem_max_norm, rounding_mode);
 }
 
 //-----------------------------------------------------------------------
@@ -75,14 +69,15 @@ __global__ void quantize_mx_innermost_cuda_kernel (
 ) {
     const long offset = blockDim.x * blockIdx.x + threadIdx.x;
     if (offset >= total_size) return;
-    const T elem = in[offset];
+    const float elem = as_float(in[offset]);
 
     // allreduce to get the max value in each tile
-    int shared_exp = get_biased_exponent(elem);
+    float abs_elem = fabsf(elem);
     for (int mask = tile_size/2; mask > 0; mask /= 2) {
-        int _tmp = __shfl_xor_sync(0xFFFFFFFF, shared_exp, mask);
-        shared_exp = (_tmp > shared_exp) ? _tmp : shared_exp;
+        float _tmp = __shfl_xor_sync(0xFFFFFFFF, abs_elem, mask);
+        abs_elem = (_tmp > abs_elem) || isnan(_tmp) ? _tmp : abs_elem;
     }
+    int shared_exp = get_biased_exponent(abs_elem);
 
     bool flush_tile = (shared_exp == 0 && flush_fp32_subnorms);
 
@@ -90,13 +85,9 @@ __global__ void quantize_mx_innermost_cuda_kernel (
     const float scale = mx_get_shared_scale(
           shared_exp, scale_bits, elem_max_norm);
 
-    T scaled_in = (flush_tile) ? 0 : elem / scale;
-
-    T scaled_out = quantize_elemwise(
-            scaled_in, elem_mbits, elem_ebits, elem_max_norm,
-            rounding_mode, true, true);
-
-    out[offset] = scaled_out * scale;
+    out[offset] = (T)quantize_mx_elem(
+        elem, scale, flush_tile, elem_ebits, elem_mbits,
+        elem_max_norm, rounding_mode);
 }
 
 //-----------------------------------------------------------------------
@@ -137,15 +128,16 @@ __global__ void quantize_mx_by_tile_cuda_kernel (
     }
 
     // Find biased shared_exp
-    int shared_exp = 0; // biased exp must be >= 0
+    float abs_max_value = 0.0f;
     for (int i = 0; i < adjusted_tile_size; i++) {
         long in_i = pre_axis_i * axis_size * post_axis_size +
             (num_tiles_i * tile_size + i) * post_axis_size +
             post_axis_i;
-
-        int exp = get_biased_exponent(in[in_i]);
-        shared_exp = (exp > shared_exp) ? exp : shared_exp;
+        const float elem = as_float(in[in_i]);
+        const float abs_elem = fabsf(elem);
+        abs_max_value = (abs_elem > abs_max_value) || isnan(abs_elem) ? abs_elem : abs_max_value;
     }
+    int shared_exp = get_biased_exponent(abs_max_value);
 
     bool flush_tile = (shared_exp == 0 && flush_fp32_subnorms);
 
@@ -159,13 +151,9 @@ __global__ void quantize_mx_by_tile_cuda_kernel (
             (num_tiles_i * tile_size + i) * post_axis_size +
             post_axis_i;
 
-        T scaled_in = (flush_tile) ? 0 : in[in_i] / scale;
-
-        T scaled_out = quantize_elemwise(
-                scaled_in, elem_mbits, elem_ebits, elem_max_norm,
-                rounding_mode, true, true);
-
-        out[in_i] = scaled_out * scale;
+        out[in_i] = (T) quantize_mx_elem(
+            as_float(in[in_i]), scale, flush_tile, elem_ebits, elem_mbits,
+            elem_max_norm, rounding_mode);
     }
 }
 

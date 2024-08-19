@@ -134,9 +134,10 @@ def test_const(f1, f2, quantize_backprop, device, custom_cuda):
     (torch.mean,    simd_reduce_mean),
 ])
 @pytest.mark.parametrize("dim", [None, [0], [1], [-1], [0,-1], [0,1,2]])
+@pytest.mark.parametrize("keepdim", [False, True])
 @pytest.mark.parametrize("quantize_backprop", [False, True])
 @pytest.mark.parametrize("device, custom_cuda", DEVICE__CUSTOM_CUDA)
-def test_simd_reduce(f1, f2, dim, quantize_backprop,
+def test_simd_reduce(f1, f2, dim, keepdim, quantize_backprop,
                      device, custom_cuda):
     torch.backends.cudnn.deterministic = True
 
@@ -154,18 +155,18 @@ def test_simd_reduce(f1, f2, dim, quantize_backprop,
     x2 = torch.tensor(_x, dtype=torch.float32, device=device,
                       requires_grad=True)
 
-    if dim is None:
+    if dim is None and keepdim == False:
         q1 = f1(x1)
     else:
-        q1 = f1(x1, dim=dim)
+        q1 = f1(x1, dim=dim, keepdim=keepdim)
     loss1 = (q1**2).mean().sqrt()
     loss1.backward()
     torch.cuda.synchronize()
 
-    if dim is None:
+    if dim is None and keepdim == False:
         q2 = f2(x2, mx_specs=mx_specs)
     else:
-        q2 = f2(x2, dim=dim, mx_specs=mx_specs)
+        q2 = f2(x2, dim=dim, keepdim=keepdim, mx_specs=mx_specs)
     loss2 = (q2**2).mean().sqrt()
     loss2.backward()
     torch.cuda.synchronize()

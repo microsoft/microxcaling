@@ -21,10 +21,12 @@ The following are some general CUDA references:
 # Dependencies
 
 This library has been built and tested on a machine with the following:
-* Ubuntu 18.04
-* Nvidia Tesla V100
-* Nvidia driver 530.30.02
-* CUDA 12.1
-* libcudnn7\_7.6.4.38
-* Python 3.9.12
-* PyTorch 1.12.1+cu113
+| Information       | Nvidia V100                | Nvidia A100                | Nvidia H100                |
+|-------------------|:--------------------------:|:--------------------------:|:--------------------------:|
+| Container Image   | nvcr.io/nvidia/pytorch:24.06-py3 | nvcr.io/nvidia/pytorch:24.06-py3 | nvcr.io/nvidia/pytorch:24.06-py3 |
+| OS                | Ubuntu 20.04               | Ubuntu 22.04               | Ubuntu 22.04               |
+| Nvidia Driver     | 535.171.04                 | 535.183.01                 | 550.54.15                  |
+| CUDA              | 12.5                       | 12.5                       | 12.5                       |
+| cuDNN             | 9.1.0.70                   | 9.1.0.70                   | 9.1.0.70                   |
+| Python            | 3.10.12                    | 3.10.12                    | 3.10.12                    |
+| PyTorch           | 2.4.0                      | 2.4.0                      | 2.4.0                      |

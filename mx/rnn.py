@@ -73,6 +73,9 @@ class LSTM(torch.nn.LSTM):
         # We don't have support for these configurations
         assert(self.batch_first == False)
         assert(self.proj_size == 0)
+        if torch.cuda.is_available():
+            gpu_name = torch.cuda.get_device_name(0)
+            assert 'a100' not in gpu_name.lower() and 'h100' not in gpu_name.lower(), "Quantization errors are high in LSTM for A100 and H100 GPUs."
 
         mx_assert_test(mx_specs)
         self.mx_none = (mx_specs is None)

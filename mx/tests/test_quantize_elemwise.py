@@ -40,7 +40,11 @@ DEVICE__CUSTOM_CUDA__HALF = [
     #("cuda", True,  True)
 ]
 
-
+def test_empty_quantization():
+    x_cuda = torch.as_tensor([], dtype=torch.float32, device=torch.device('cuda'))
+    _ = _quantize_bfloat(x_cuda, bfloat=16, round='even', custom_cuda=True,
+                         allow_denorm=True)
+    
 @pytest.mark.parametrize("allow_denorm", [True, False])
 @pytest.mark.parametrize("device, custom_cuda", [
     ("cpu", False),
@@ -262,3 +266,26 @@ def test_elem_formats_round(elem_format, encodes_infs, round,
 
     check_diff_quantize(x1, y1, y2)
 
+@pytest.mark.parametrize("input_size", [(1000)])
+@pytest.mark.parametrize("bfloat", [16, 12])
+@pytest.mark.parametrize("round", ['nearest', 'floor', 'even'])
+@pytest.mark.parametrize("allow_denorm", [True, False])
+def test_cpu_cuda_random(input_size, bfloat, round, allow_denorm):
+    if bfloat <= 9:
+        pytest.xfail('Expected fail. bfloat<=9')
+
+    mx_specs = get_default_mx_specs()
+    mx_specs['bfloat'] = bfloat
+    mx_specs['bfloat16_subnorm'] = allow_denorm
+    mx_specs['round'] = round
+    mx_specs['custom_cuda'] = True
+
+    for _ in range(ITERATIONS):
+        x = np.random.normal(size=input_size)
+        x_torch = torch.as_tensor(x, dtype=torch.float32, device=torch.device("cpu"))
+        y_torch = _quantize_bfloat(x_torch, bfloat=bfloat, round=round,
+                                  custom_cuda=True, allow_denorm=allow_denorm)
+        x_cuda = torch.as_tensor(x, dtype=torch.float32, device=torch.device('cuda'))
+        y_cuda = _quantize_bfloat(x_cuda, bfloat=bfloat, round=round,
+                                  custom_cuda=True, allow_denorm=allow_denorm)
+        check_diff_quantize(x, y_torch, y_cuda)

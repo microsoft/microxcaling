@@ -1,7 +1,3 @@
-/*
- * Microsoft Confidential
- */
-
 #include <torch/types.h>
 #include <cuda.h>
 #include <cuda_fp16.h>
