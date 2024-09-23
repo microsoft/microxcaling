@@ -2,7 +2,7 @@
 
 [OCP MX Formats Specification](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
 
-This library provides the capability to emulate MX-compatble formats
+This library provides the capability to emulate MX-compatible formats
 and bfloat quantization in pytorch, enabling data science exploration
 for DNNs with different MX formats.
 The underlying computations are done in float32/bfloat16/fp16 but with values restricted to
@@ -272,9 +272,9 @@ MX library functions. These are automatically JIT-compiled via
 custom\_extensions.py
 
 The following are some references for creating custom extensions for PyTorch:
-* Custom C++ and CUDA Extension: https://pytorch.org/tutorials/advanced/cpp\_extension.html
-* Tensor class: https://pytorch.org/cppdocs/api/classat\_1\_1\_tensor.html
-* Tensor creation API: https://pytorch.org/cppdocs/notes/tensor\_creation.html
+* Custom C++ and CUDA Extension: https://pytorch.org/tutorials/advanced/cpp_extension.html
+* Tensor class: https://pytorch.org/cppdocs/api/classat_1_1_tensor.html
+* Tensor creation API: https://pytorch.org/cppdocs/notes/tensor_creation.html
 
 In the CUDA files, we subsitute the following MX terminology
 as "block_size" already has a different meaning in CUDA:
