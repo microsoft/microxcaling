@@ -144,34 +144,34 @@ specs like w\_elem\_format\_bp.
 # MXFP8_e5m2 matmuls with bfloat16 vector ops, forward pass only
 mx_specs = MxSpecs()
 
-mx_specs[‘scale_bits’] = 8
-mx_specs[‘w_elem_format’] = 'fp8_e5m2'
-mx_specs[‘a_elem_format’] = 'fp8_e5m2'
-mx_specs[‘block_size’] = 32
-mx_specs[‘bfloat’] = 16
-mx_specs[‘custom_cuda’] = True
+mx_specs['scale_bits'] = 8
+mx_specs['w_elem_format'] = 'fp8_e5m2'
+mx_specs['a_elem_format'] = 'fp8_e5m2'
+mx_specs['block_size'] = 32
+mx_specs['bfloat'] = 16
+mx_specs['custom_cuda'] = True
 ```
 ```
 # MXFP4_e2m1 matmuls with bfloat16 vector ops, forward pass only
 mx_specs = MxSpecs()
 
-mx_specs[‘scale_bits’] = 8
-mx_specs[‘w_elem_format’] = 'fp4_e2m1'
-mx_specs[‘a_elem_format’] = 'fp4_e2m1'
-mx_specs[‘block_size’] = 32
-mx_specs[‘bfloat’] = 16
-mx_specs[‘custom_cuda’] = True
+mx_specs['scale_bits'] = 8
+mx_specs['w_elem_format'] = 'fp4_e2m1'
+mx_specs['a_elem_format'] = 'fp4_e2m1'
+mx_specs['block_size'] = 32
+mx_specs['bfloat'] = 16
+mx_specs['custom_cuda'] = True
 ```
 ```
 # MXINT8 matmuls with bfloat16 vector ops, forward pass only
 mx_specs = MxSpecs()
 
-mx_specs[‘scale_bits’] = 8
-mx_specs[‘w_elem_format’] = 'int8'
-mx_specs[‘a_elem_format’] = 'int8'
-mx_specs[‘block_size’] = 32
-mx_specs[‘bfloat’] = 16
-mx_specs[‘custom_cuda’] = True
+mx_specs['scale_bits'] = 8
+mx_specs['w_elem_format'] = 'int8'
+mx_specs['a_elem_format'] = 'int8'
+mx_specs['block_size'] = 32
+mx_specs['bfloat'] = 16
+mx_specs['custom_cuda'] = True
 ```
 
 ### Backward Pass Quantization ###
