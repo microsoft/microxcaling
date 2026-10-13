@@ -265,6 +265,12 @@ def _quantize_mx(
         else:
             raise ValueError("Unrecognized device type %s" % A.device.type)
     else:
+        # Compute in FP32 like the C++ and CUDA code, since FP16 cannot
+        # represent all shared scales and intermediates (e.g., 2**-25)
+        A_dtype = A.dtype
+        if A_dtype == torch.float16:
+            A = A.float()
+
         # Get shared exponents
         shared_exp = _shared_exponents(
             A, method=shared_exp_method, axes=shared_exp_axes, ebits=0,
@@ -290,6 +296,8 @@ def _quantize_mx(
                 custom_cuda=custom_cuda)
 
         A = A * (2**shared_exp)
+
+        A = A.to(A_dtype)
 
     # Undo tile reshaping
     if block_size:

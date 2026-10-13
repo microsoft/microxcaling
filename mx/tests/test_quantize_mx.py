@@ -100,3 +100,31 @@ def test_mx_encoding_cpu_cuda(scale_bits, elem_format, block_size, round,
                       custom_cuda=True)
 
     check_diff_quantize(x1, y1, y2)
+
+@pytest.mark.parametrize("elem_format", ELEM_FMTS)
+@pytest.mark.parametrize("round", ('nearest', 'floor', 'even'))
+@pytest.mark.parametrize("flush_fp32_subnorms", (False,True))
+def test_mx_encoding_fp16(elem_format, round, flush_fp32_subnorms):
+    # FP16 input should give the same result as FP32 input, including
+    # zero blocks and blocks whose shared scale is outside the FP16 range
+    x1 = torch.zeros((3, 32), dtype=torch.float32)
+    x1[1, 0] = 2**-10
+    x1[2, 0] = 1.9951171875
+    x2 = x1.to(torch.float16)
+
+    y1 = _quantize_mx(x1, 8, elem_format,
+                      block_size=32,
+                      axes=[-1],
+                      round=round,
+                      flush_fp32_subnorms=flush_fp32_subnorms,
+                      custom_cuda=False)
+
+    y2 = _quantize_mx(x2, 8, elem_format,
+                      block_size=32,
+                      axes=[-1],
+                      round=round,
+                      flush_fp32_subnorms=flush_fp32_subnorms,
+                      custom_cuda=False)
+
+    assert y2.dtype == torch.float16
+    check_diff_quantize(x1, y1, y2, handle_infs=True)
